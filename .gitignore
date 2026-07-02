@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Electron
+release/
+release-builds/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Playwright
+test-results/
+playwright-report/
+
+# Cache
+.cache/
+.parcel-cache/
+.vite/
+.turbo/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Temp
+*.tmp
+*.bak
+
+# Dev userData (sandbox workaround)
+.dev-userdata/
