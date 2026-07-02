@@ -1,9 +1,13 @@
 # OpenCoding Agent Desktop — 产品需求文档 (PRD)
 
-> **文档版本**: v2.1 (UI 框架优先级策略修订：禁止 antd v6 作为首选)
+> **文档版本**: v2.3 (v0.1 范围收缩：多客户端需求降级 + 风险登记册补全)
 > **文档类型**: Product Requirements Document
 > **审视视角**: 产品经理 (PM) / 项目总监 (PMO) / QA
 > **参考对标**: Claude Code / Codex CLI / OpenCode / Cursor / Cline
+>
+> **v2.3 变更说明**: 根据 07-多角色审视评估报告 §1.1 (S1)、§4.4 (M10) 与 §8.3 总体结论，收缩 v0.1 范围为"Desktop (嵌入式) + 4 模块 + 12 表 + 6-8 周"。具体调整：§1.1 产品定义增加 v0.1 阶段性说明；§3.9 多客户端需求中 REQ-UI-008 (TUI) 与 REQ-UI-010 (CLI) 优先级由 P1 降级为 P2，并新增 v0.1 仅交付 Desktop 客户端的说明；§2.2 需求统计表"多客户端"行拆分为"Desktop 客户端"与"多客户端 (TUI/Web/CLI/Custom)"两行并更新总计；§8 风险登记册新增 R14~R18 共 5 项前后端分离架构相关风险 (JSON-RPC 序列化开销、isolated-vm V8 耦合、monorepo 构建复杂度、better-sqlite3 跨 Worker 限制、v0.1 收缩导致用户流失)。
+>
+> **v2.2 变更说明**: 前后端分离架构对齐：产品需求从单一桌面端扩展为多客户端平台（Desktop/TUI/Web/CLI）。新增 REQ-UI-008 TUI 客户端、REQ-UI-009 Web 客户端、REQ-UI-010 CLI 客户端需求。更新风险登记册移除 Tauri 相关风险。
 >
 > **v2.1 变更说明**: 根据用户决策，**禁止将 antd v6 + antd-style 作为首选 UI 框架**。遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react)，UI 框架优先级调整为：**LobeHub UI（base-ui 无头原语优先）→ @lobehub/ui 高级组件 → 基于 LobeHub UI 封装 → antd v6 兜底 → 自定义实现**。新增需求 **REQ-UI-007: UI 框架优先级策略**。详见 [09 文档 v1.2 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 v3.3](./08-技术选型与架构方案(实施版).md)。
 
@@ -22,7 +26,7 @@
   - [3.6 配置化与自定义需求](#36-配置化与自定义需求)
   - [3.7 扩展与生态需求](#37-扩展与生态需求)
   - [3.8 数据迁移与同步需求](#38-数据迁移与同步需求)
-  - [3.9 桌面端需求](#39-桌面端需求)
+  - [3.9 多客户端需求](#39-多客户端需求)
   - [3.10 可观测与调试需求](#310-可观测与调试需求)
   - [3.11 安全与合规需求](#311-安全与合规需求)
 - [4. 非功能需求](#4-非功能需求)
@@ -37,7 +41,9 @@
 
 ### 1.1 产品定义
 
-OpenCoding Agent Desktop 是一款开源、本地优先、高度可配置的 Coding Agent 桌面端应用。它将 LLM 推理、工具执行、代码库感知、工作流编排封装为可交互、可中断、可审计的智能体。
+OpenCoding Agent Desktop 是一款开源、本地优先、高度可配置的 Coding Agent 多客户端平台。后端采用无头 (headless) 引擎架构，前端提供 Desktop / TUI / Web / CLI 多种客户端，通过 JSON-RPC 2.0 over 多 Transport (HTTP/SSE、WebSocket、stdio、Electron IPC、Embedded) 与后端通信。它将 LLM 推理、工具执行、代码库感知、工作流编排封装为可交互、可中断、可审计的智能体，并支持用户基于 @opencode/api 契约自定义客户端开发。
+
+> **v0.1 阶段性说明** (v2.3 新增): 多客户端平台是产品的**长期愿景**，但 v0.1 优先交付 Desktop 客户端 (Embedded 模式)，仅实现 Embedded + Electron IPC 两种 Transport。TUI / Web / CLI 客户端 (REQ-UI-008~010) 与自定义客户端 SDK (REQ-UI-011) 降级为 v0.2+；服务式 (Service) 后端、Sub-Agent、Multi-Agent 等多客户端相关能力推迟到 v0.2~v0.3。这一收缩策略参照 07-多角色审视评估报告 §1.1 (S1) 与 §8.3 总体结论，使 v0.1 在 6-8 周内可交付，同时保留 v4.1 前后端分离架构的演进余地。多客户端平台愿景与 v4.1 架构演进方向保留不变。
 
 ### 1.2 核心价值主张
 
@@ -66,10 +72,12 @@ OpenCoding Agent Desktop 是一款开源、本地优先、高度可配置的 Cod
 
 ```
 REQ-{域}-{序号}  例: REQ-AGENT-001
-域: AGENT(核心引擎) | CTX(上下文) | TOOL(工具) | CHAT(对话交互) | DATA(持久化) | CFG(配置化) | EXT(扩展) | MIG(迁移) | UI(桌面端) | OBS(可观测) | SEC(安全)
+域: AGENT(核心引擎) | CTX(上下文) | TOOL(工具) | CHAT(对话交互) | DATA(持久化) | CFG(配置化) | EXT(扩展) | MIG(迁移) | UI(多客户端) | OBS(可观测) | SEC(安全)
 ```
 
 ### 2.2 需求统计
+
+> **v2.3 调整说明**: 原"多客户端"行拆分为"Desktop 客户端" (REQ-UI-001~007，v0.1 交付) 与"多客户端 (TUI/Web/CLI/Custom)" (REQ-UI-008~011，v0.2+) 两行。REQ-UI-008 (TUI) 与 REQ-UI-010 (CLI) 优先级由 P1 降级为 P2，详见 §3.9。
 
 | 域 | P0 | P1 | P2 | P3 | 合计 |
 |----|:---:|:---:|:---:|:---:|:---:|
@@ -81,10 +89,11 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 | 配置化与自定义 | 2 | 11 | 5 | 2 | 20 |
 | 扩展与生态 | 1 | 10 | 5 | 3 | 19 |
 | 数据迁移与同步 | 0 | 8 | 4 | 2 | 14 |
-| 桌面端 | 3 | 9 | 4 | 2 | 18 |
+| Desktop 客户端 (REQ-UI-001~007) | 3 | 4 | 0 | 0 | 7 |
+| 多客户端 (TUI/Web/CLI/Custom, REQ-UI-008~011) | 0 | 0 | 4 | 0 | 4 |
 | 可观测与调试 | 0 | 10 | 4 | 2 | 16 |
 | 安全与合规 | 2 | 7 | 3 | 2 | 14 |
-| **合计** | **19** | **107** | **41** | **21** | **188** |
+| **合计** | **19** | **102** | **41** | **19** | **181** |
 
 ---
 
@@ -716,7 +725,11 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 
 ---
 
-### 3.9 桌面端需求
+### 3.9 多客户端需求
+
+> **架构说明**: v2.2 起采用前后端分离架构，后端为无头引擎 (@opencode/core + @opencode/server)，前端为多种瘦客户端通过 JSON-RPC 2.0 Transport (HTTP/SSE、WebSocket、stdio、Electron IPC、Embedded) 连接后端。REQ-UI-001 至 REQ-UI-007 适用于 Desktop 客户端 (Electron)；REQ-UI-008 至 REQ-UI-011 定义其他客户端形态。
+
+> **v0.1 范围收缩说明** (v2.3 新增): 根据 07-多角色审视评估报告 §1.1 (S1)，v0.1 **仅交付 Desktop 客户端 (REQ-UI-001~007)**，通过 Embedded + Electron IPC 两种 Transport 连接后端。TUI (REQ-UI-008) / Web (REQ-UI-009) / CLI (REQ-UI-010) / 自定义客户端 (REQ-UI-011) 全部降级为 v0.2+，其中 REQ-UI-008 与 REQ-UI-010 优先级由 P1 降级为 P2。服务式 (Service) 后端、HTTP/SSE/WebSocket Transport 推迟到 v0.2~v0.3。多客户端平台仍是产品长期愿景，v4.1 架构演进方向保留。
 
 #### REQ-UI-001: 桌面应用框架 [P0]
 
@@ -795,6 +808,55 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 - [ ] 仅当 @lobehub/ui 完全无法满足时（如复杂 Table/Tree）才使用 antd v6 原生 API 作为兜底
 - [ ] 应用主框架布局基于 @lobehub/ui 的 Layout/LayoutHeader/LayoutMain/LayoutSidebar/LayoutToc 组件实现
 - [ ] 组件优先级策略在 [09 文档 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 §3.3](./08-技术选型与架构方案(实施版).md) 中保持一致
+
+#### REQ-UI-008: TUI 客户端 [P2]
+
+**描述**: 终端界面客户端（基于 Ink），作为 Desktop 之外的轻量交互入口，通过 stdio Transport 连接后端引擎。v0.1 不交付，规划于 v0.2+。
+
+**验收标准**:
+- [ ] 基于 Ink (React for CLI) 渲染终端 UI
+- [ ] 支持会话管理：新建/切换/搜索会话
+- [ ] 支持流式对话渲染（Markdown 终端渲染）
+- [ ] 支持工具调用审批（HITL 确认）
+- [ ] 通过 stdio Transport 连接 @opencode/server
+- [ ] 支持基础 Slash Commands
+- [ ] 键盘快捷键操作
+
+#### REQ-UI-009: Web 客户端 [P2]
+
+**描述**: 浏览器客户端（可选），通过 HTTP/SSE Transport 连接后端，支持远程访问与团队协作场景。
+
+**验收标准**:
+- [ ] 基于 React 的浏览器 SPA
+- [ ] 通过 HTTP/SSE Transport 连接 @opencode/server
+- [ ] 支持远程访问（跨主机连接后端引擎）
+- [ ] 支持会话/对话/工具调用审批
+- [ ] 多面板布局适配浏览器视口
+- [ ] 浏览器内 API Key 安全输入
+
+#### REQ-UI-010: CLI 客户端 [P2]
+
+**描述**: 命令行客户端（基于 Commander.js），通过 stdio Transport 连接后端，支持脚本化/自动化集成。v0.1 不交付，规划于 v0.2+。
+
+**验收标准**:
+- [ ] 基于 Commander.js 的命令行接口
+- [ ] 通过 stdio Transport 连接 @opencode/server
+- [ ] 支持非交互模式：`opencode run "任务描述"` 单次执行
+- [ ] 支持交互模式：REPL 式持续对话
+- [ ] 支持管道输入/输出（stdin/stdout JSON 流）
+- [ ] 支持脚本化与 CI/CD 集成
+- [ ] 退出码语义化（成功/失败/需审批）
+
+#### REQ-UI-011: 自定义客户端 [P2]
+
+**描述**: 用户可基于 @opencode/api 契约 + Transport 客户端包开发自定义客户端，实现个性化交互形态。
+
+**验收标准**:
+- [ ] 发布 @opencode/api 包，定义完整 JSON-RPC 契约类型
+- [ ] 提供 Transport 客户端包（HTTP/SSE、WebSocket、stdio、Embedded）
+- [ ] 提供客户端开发文档与示例
+- [ ] 提供最小可运行的 Embedded 客户端 SDK
+- [ ] 契约版本化，向后兼容
 
 ---
 
@@ -1073,7 +1135,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 |------|:---:|:---:|------|
 | Rust 核心开发 | 1-2 | 3 | PAOR 引擎 / SQLite 持久化 / MCP Client / 权限网关 |
 | 前端开发 (React/TS) | 1-2 | 3 | 流式对话 / 配置界面 / 多面板布局 |
-| 全栈/Tauri | 1 | 2 | 桌面框架集成 / IPC / 构建流水线 |
+| 全栈/Electron | 1 | 2 | 桌面框架集成 / IPC / 构建流水线 |
 | 产品/测试 | 1 | 2 | 需求验证 / 测试用例 / 文档 |
 | **合计** | **4-6** | **~10 人月** | v0.1 MVP 交付 |
 
@@ -1083,16 +1145,25 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 
 ### 8.1 技术风险
 
+> **v2.3 新增说明**: 根据 07-多角色审视评估报告 §4.4 (M10)，新增 R14~R17 共 4 项前后端分离架构相关技术风险，覆盖 JSON-RPC 序列化开销、isolated-vm V8 耦合、monorepo 构建复杂度、better-sqlite3 跨 Worker 限制。
+
 | # | 风险 | 概率 | 影响 | 缓解措施 | 负责人 |
 |---|------|:---:|:---:|------|:---:|
 | R1 | Rust 开发人员难招/培养周期长 | 高 | 高 | v0.1 核心团队至少 1 名有 Rust 经验；提供内部培训材料 | Tech Lead |
 | R2 | LLM API 不稳定/模型退市导致 Provider 不可用 | 中 | 高 | 多 Provider 抽象层 + Fallback 链 + 本地模型 (Ollama) 作为底线 | 架构师 |
 | R3 | SQLite WAL 并发写入在高负载下成为瓶颈 | 中 | 中 | WAL 检查点策略调优 + 写入批量合并 + 监控写入队列长度 | 架构师 |
-| R4 | Tauri 2.x 在特定平台有兼容性问题 | 中 | 中 | 三平台 CI 全覆盖；保留 Electron 作为 fallback 方案 | 桌面开发 |
+| R4 | Electron 跨平台兼容性与包体积问题 | 中 | 中 | 三平台 CI 全覆盖；优化打包配置控制体积；渐进式原生模块加载 | 桌面开发 |
 | R5 | 代码索引大项目的性能达不到预期 | 中 | 中 | 增量索引 + 懒加载语法文件 + 文件过滤 (gitignore) | 索引开发 |
 | R6 | MCP Server 协议版本不兼容 | 低 | 中 | 版本协商 + 兼容性测试矩阵 (top 20 MCP Servers) | MCP 开发 |
+| R13 | 前后端分离架构复杂度：JSON-RPC Transport 层增加调试与排错复杂度 | 中 | 中 | 统一 Transport 抽象层 + 结构化日志 + 请求/响应追踪 ID + 开发态调试工具 | 架构师 |
+| R14 | JSON-RPC 序列化开销导致 Loop 延迟超标 (前后端分离架构风险) | 中 | 中 | v0.1 嵌入式模式允许绕过 L4 Transport 直连 L5 后端 (经 L3 类型契约约束)；性能基线测试覆盖 agent.run 端到端延迟 P99；必要时引入二进制编码 (MessagePack) 替代 JSON | 架构师 |
+| R15 | isolated-vm V8 版本耦合导致 Electron 升级阻断 (前后端分离架构风险) | 中 | 高 | isolated-vm 需与 Electron V8 严格匹配，每次 Electron 升级需 electron-rebuild；准备 worker_threads 回退方案作为 Plan B；CI 增加 isolated-vm 编译产物校验 | Tech Lead |
+| R16 | 多包 monorepo 构建复杂度增加交付风险 (前后端分离架构风险) | 中 | 中 | Turborepo 2.x + npm workspaces 增量构建；准备回退至纯 npm workspaces 方案；08 §9 增加 turbo.json 示例配置与 Electron + Turborepo 集成已知问题清单 | 构建工程师 |
+| R17 | better-sqlite3 跨 Worker 访问限制影响并发设计 (前后端分离架构风险) | 高 | 中 | better-sqlite3 同步 API 无法跨 Worker Threads 共享连接句柄；v0.1 采用单 Worker 持有写入连接 + 各 Worker 独立只读连接策略；写入经主进程 MessagePort 转发 | 架构师 |
 
 ### 8.2 市场风险
+
+> **v2.3 新增说明**: 根据 07-多角色审视评估报告 §4.4 (M10)，新增 R18 评估 v0.1 范围收缩对多客户端早期用户的影响。
 
 | # | 风险 | 概率 | 影响 | 缓解措施 | 负责人 |
 |---|------|:---:|:---:|------|:---:|
@@ -1100,6 +1171,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 | R8 | 竞品快速跟进 (Claude Code 开源或 Cursor 增加类似功能) | 中 | 高 | 保持开源社区活跃度 + 插件生态锁定 + 快速迭代节奏 | CEO |
 | R9 | 开源社区参与度低 (贡献者/插件作者少) | 中 | 中 | 良好的 CONTRIBUTING 指南 + Issue 标签体系 + 贡献者激励计划 | PM |
 | R10 | LLM 成本波动导致用户使用成本不可控 | 低 | 中 | 本地模型支持 + 成本仪表盘 + 预算上限硬性约束 | 产品 |
+| R18 | v0.1 收缩范围导致多客户端早期用户流失 (前后端分离架构风险) | 中 | 低 | 公开 v0.2 路线图明确 TUI/CLI 交付时间；v0.1 提供 @opencode/api 契约包便于社区预研自定义客户端；GitHub Releases 与 README 标注 v0.1 仅 Desktop；早期用户反馈渠道引导至 v0.2 优先级投票 | PM |
 
 ### 8.3 项目风险
 

@@ -1,12 +1,16 @@
 # OpenCoding Agent Desktop — 完整产品设计文档
 
-> **文档版本**: v1.1 (UI 框架优先级策略修订：禁止 antd v6 作为首选)
+> **文档版本**: v1.3 (对齐 v4.2 架构，更新产品形态为多客户端分阶段交付)
 > **文档类型**: 产品需求 + 技术架构 + 工程实现规格 (PRD + TRD 合订)
 > **审视视角**: 产品经理 (PM) / 技术总监 (CTO) / 项目总监 (PMO)
 > **参考对标**: OpenCode Desktop / Claude Code / Codex CLI / Cursor / Cline / Aider
-> **开源协议建议**: Apache-2.0 (允许商业衍生) 或 MIT
+> **开源协议**: Apache-2.0
 >
 > **v1.1 变更说明**: 根据用户决策，**禁止将 antd v6 + antd-style 作为首选 UI 框架**。遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react)，UI 框架优先级调整为：**LobeHub UI（base-ui 无头原语优先）→ @lobehub/ui 高级组件 → 基于 LobeHub UI 封装 → antd v6 兜底 → 自定义实现**。新增设计决策 **D9.3: UI 框架优先级策略**，界面布局统一使用 @lobehub/ui Layout 组件体系（替代 react-resizable-panels 方案）。详见 [09 文档 v1.2 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 v3.3 §3.3](./08-技术选型与架构方案(实施版).md)。
+>
+> **v1.2 变更说明**: 清理 Rust/Tauri 历史遗留信息，统一为 Electron + TypeScript 方案。§9.2 工程结构替换为 Electron monorepo，§9.3 接口契约替换为 TypeScript interface，§9.6 打包替换为 electron-builder，§11.2 非功能目标对齐分阶段，附录 C 数据模型引用 06 文档 29 张表。
+>
+> **v1.3 变更说明**: 对齐 v4.2 架构，更新产品形态为多客户端分阶段交付（M19 修复）。§1.4 竞品对标表"形态"行由"原生桌面 + CLI 双形态"改为"原生桌面 (v0.1) + TUI/Web/CLI (v0.2+)"，对齐 4 客户端架构与"收缩 v0.1 范围"策略（v0.1 = Desktop 嵌入式 + 4 模块 + 12 表，TUI/Web/CLI 推迟到 v0.2+）。
 
 ---
 
@@ -83,7 +87,7 @@ OpenCoding Agent Desktop 是一款**开源、本地优先 (local-first)、高度
 
 | 维度 | Claude Code | Codex CLI | OpenCode | Cursor | Cline | **本产品 (目标)** |
 |------|-------------|-----------|----------|--------|-------|-------------------|
-| 形态 | CLI + 桌面 | CLI | CLI/TUI | IDE | VSCode 插件 | **原生桌面 + CLI 双形态** |
+| 形态 | CLI + 桌面 | CLI | CLI/TUI | IDE | VSCode 插件 | **原生桌面 (v0.1) + TUI/Web/CLI (v0.2+)** |
 | 模型绑定 | Anthropic | OpenAI | 多模型 | 多模型 | 多模型 | **多模型,可插拔** |
 | 开源 | 部分 | 是 | 是 | 否 | 是 | **是** |
 | 提示词可定制 | 否 | 部分 | 是 | 否 | 是 | **全链路可定制** |
@@ -141,7 +145,7 @@ OpenCoding Agent Desktop 是一款**开源、本地优先 (local-first)、高度
 
 ### 2.2 进程模型
 
-采用 **主进程 + 多 Worker 进程** 架构 (无论 Tauri 还是 Electron):
+采用 **主进程 + 多 Worker 进程** 架构 (Electron):
 
 | 进程 | 职责 | 隔离级别 |
 |------|------|----------|
@@ -1067,27 +1071,25 @@ profile:
 
 ### 9.1 技术栈选型
 
-> **架构变更说明**: 本节原基于 Tauri + Rust + shadcn/ui 架构。实际实施已迁移至 **Electron + TypeScript + LobeHub 生态** 架构，详见 [08-技术选型与架构方案(实施版).md](./08-技术选型与架构方案(实施版).md) v3.3 与 [09-LobeHub生态集成方案.md](./09-LobeHub生态集成方案.md) v1.2。
-
-| 层 | 选型 (实施版 v3.3) | 原设计 (v2.0) | 理由 |
-|----|------|------|------|
-| 桌面框架 | **Electron 35** | Tauri 2.x | 用户偏好，Node.js 原生集成，生态最成熟 |
-| 前端 | **React 19 + TypeScript 5.7** | React + TS | antd v6 原生支持 React 19 |
-| UI 库 | **@lobehub/ui 为主（base-ui 优先 → 高级组件 → 封装 → antd v6 兜底）** | shadcn/ui + Tailwind | LobeHub 生态，Chat/Markdown 开箱即用 |
-| 代码编辑器 | **Monaco Editor** | Monaco / CodeMirror 6 | 用户指定，IDE 级能力 |
-| AI 输入编辑器 | **@lobehub/editor** (Lexical) | — (新增) | 富文本 + /命令 + @文件 + 附件预览 |
-| 图标库 | **@lobehub/icons + @ant-design/icons** | (未明确) | AI 品牌图标 |
-| Markdown | **@lobehub/ui/mdx** | (未明确) | LaTeX + 语法高亮 + 流式渲染 |
-| 代码规范 | **@lobehub/lint** | (未明确) | ESLint + Prettier 统一配置 |
-| 终端 | **xterm.js** | xterm.js | 事实标准 (不变) |
-| 后端逻辑 | **TypeScript (Node.js + Worker Threads)** | Rust (核心) + Node Worker (插件) | 用户偏好，全栈统一 |
-| IPC | Electron IPC (contextBridge) | Tauri IPC / 自定义 | Electron 原生 |
-| 持久化 | **SQLite (better-sqlite3)** + 文件 | SQLite (rusqlite) | Node.js 绑定 |
-| 向量 | **sqlite-vec** 默认 / LanceDB | sqlite-vec / LanceDB | 本地优先 (不变) |
-| CLI | **Commander.js / xterm.js** | Rust (clap) + TUI (ratatui) | TypeScript 实现 |
-| 构建 | **pnpm + Vite + electron-vite** | pnpm + cargo + CI | 统一构建链 |
-| 测试 | **Vitest + Playwright** | Vitest + Rust test + Playwright | 移除 Rust test |
-| 图表 (Phase 3) | **@lobehub/charts** | (未明确) | 基于 Recharts |
+| 层 | 选型 (实施版 v3.3) | 理由 |
+|----|------|------|
+| 桌面框架 | **Electron 35** | 用户偏好，Node.js 原生集成，生态最成熟 |
+| 前端 | **React 19 + TypeScript 5.7** | antd v6 原生支持 React 19 |
+| UI 库 | **@lobehub/ui 为主（base-ui 优先 → 高级组件 → 封装 → antd v6 兜底）** | LobeHub 生态，Chat/Markdown 开箱即用 |
+| 代码编辑器 | **Monaco Editor** | 用户指定，IDE 级能力 |
+| AI 输入编辑器 | **@lobehub/editor** (Lexical) | 富文本 + /命令 + @文件 + 附件预览 |
+| 图标库 | **@lobehub/icons + @ant-design/icons** | AI 品牌图标 |
+| Markdown | **@lobehub/ui/mdx** | LaTeX + 语法高亮 + 流式渲染 |
+| 代码规范 | **@lobehub/lint** | ESLint + Prettier 统一配置 |
+| 终端 | **xterm.js** | 事实标准 |
+| 后端逻辑 | **TypeScript (Node.js + Worker Threads)** | 用户偏好，全栈统一 |
+| IPC | Electron IPC (contextBridge) | Electron 原生 |
+| 持久化 | **SQLite (better-sqlite3)** + 文件 | Node.js 绑定 |
+| 向量 | **sqlite-vec** 默认 / LanceDB | 本地优先 |
+| CLI | **Commander.js / xterm.js** | TypeScript 实现 |
+| 构建 | **npm + Vite + electron-vite + Turborepo** | 统一构建链 |
+| 测试 | **Vitest + Playwright** | TS 原生测试栈 |
+| 图表 (Phase 3) | **@lobehub/charts** | 基于 Recharts |
 
 > **设计决策 D9.1 (修订)**: 核心引擎 (Prompt/Context/Harness/Loop) 用 **TypeScript** 实现,运行于 Electron Main Process 的 **Worker Threads** 中以实现崩溃隔离与多核并行;前后端共享类型定义,全栈单一语言。这是「**统一性 + 生态**」的选择,牺牲部分性能换取开发效率与团队技能统一。详见 [08 文档 §2 方案 B](./08-技术选型与架构方案(实施版).md)。
 
@@ -1095,50 +1097,142 @@ profile:
 
 > **设计决策 D9.3 (新增)**: **UI 框架优先级策略** — 遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react),**禁止将 antd v6 + antd-style 作为首选 UI 框架**。UI 组件选型遵循 5 级降序优先级:**@lobehub/ui base-ui 无头原语(优先)→ @lobehub/ui 高级组件 → 基于 LobeHub UI 封装 → antd v6 兜底 → 自定义实现**。antd v6 仅作为 @lobehub/ui 的底层依赖存在,不直接使用其原生组件 API;仅当 @lobehub/ui 完全无法满足时(如复杂 Table/Tree)才作为兜底。界面布局统一使用 **@lobehub/ui Layout 组件体系**(Layout/LayoutHeader/LayoutMain/LayoutSidebar/LayoutToc + DraggablePanel),**替代 react-resizable-panels 方案**。详见 [09 文档 v1.2 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 v3.3 §3.3](./08-技术选型与架构方案(实施版).md)。
 
-### 9.2 核心模块工程结构
+### 9.2 核心模块工程结构（前后端分离 v4.1）
+
+> **架构变更说明** (v1.2): 采用**前后端分离**架构。后端是 headless Agent 引擎（纯 Node.js，无 Electron 依赖），前端是多个 thin client（Desktop/TUI/Web/CLI），通过 JSON-RPC 2.0 协议通信。类似 OpenCode（Go 后端 + 多客户端）和 Codex（CLI/App 前端）。详见 [04 文档 v4.1 §4-§6](./04-架构设计文档.md)。
 
 ```
 opencoding/
-├── crates/
-│   ├── core/           # Prompt/Context/Harness/Loop 引擎 (Rust)
-│   ├── model/          # Provider 抽象与实现
-│   ├── tools/          # 内置工具
-│   ├── mcp/           # MCP client
-│   ├── storage/        # SQLite/索引
-│   ├── index/          # Tree-sitter + 向量
-│   └── ipc/           # IPC 协议
-├── apps/
-│   ├── desktop/       # Tauri 应用
-│   └── cli/           # CLI/TUI
-├── packages/
-│   ├── ui/            # React 组件
-│   ├── sdk/           # 插件 SDK (TS)
-│   └── config/        # 配置 schema + 默认
-├── plugins/           # 内置插件
-├── skills/            # 内置 skills
-├── prompts/           # 内置 prompt 模板
+├── apps/                           # 前端客户端（thin clients）
+│   ├── desktop/                    # Electron 桌面应用
+│   │   ├── main/                   # Electron main (窗口/菜单/托盘 + 后端嵌入)
+│   │   │   ├── index.ts
+│   │   │   ├── window.ts
+│   │   │   ├── tray.ts
+│   │   │   ├── menu.ts
+│   │   │   ├── ipc/                # Electron IPC 路由
+│   │   │   └── backend.ts          # 后端嵌入适配器（嵌入式运行）
+│   │   ├── preload/                # contextBridge
+│   │   └── renderer/               # React 19 + @lobehub/ui
+│   │       ├── index.html
+│   │       ├── main.tsx
+│   │       ├── App.tsx
+│   │       ├── components/
+│   │       ├── stores/             # Zustand stores
+│   │       └── hooks/
+│   │
+│   ├── tui/                        # Terminal UI (Ink - React for CLI)
+│   │   ├── src/
+│   │   │   ├── index.tsx           # Ink 入口
+│   │   │   ├── App.tsx
+│   │   │   ├── components/         # TUI 组件
+│   │   │   ├── hooks/
+│   │   │   └── client/             # 后端连接（stdio 或 http）
+│   │   └── package.json
+│   │
+│   ├── web/                        # Web 应用（可选，浏览器访问）
+│   │   ├── src/
+│   │   │   ├── App.tsx
+│   │   │   ├── client/             # WebSocket 连接
+│   │   │   └── components/         # 复用 desktop 组件
+│   │   └── vite.config.ts
+│   │
+│   └── cli/                        # CLI (Commander.js)
+│       ├── src/
+│       │   ├── index.ts
+│       │   ├── commands/
+│       │   └── client/             # 后端连接
+│       └── package.json
+│
+├── packages/                       # 后端 + 共享包
+│   ├── core/                       # 后端核心引擎（纯 Node.js，无 Electron 依赖）
+│   │   ├── src/
+│   │   │   ├── agent/              # Agent Loop/Prompt/Context/Harness
+│   │   │   │   ├── loop/           # PAOR 主循环 + 子循环
+│   │   │   │   ├── prompt/         # 七层 Prompt 模型
+│   │   │   │   ├── context/        # 上下文引擎
+│   │   │   │   ├── harness/        # Harness 工程骨架
+│   │   │   │   ├── subagent/       # SubAgent Manager
+│   │   │   │   └── coordinator/    # Multi-Agent Coordinator
+│   │   │   ├── tools/              # 工具注册与执行
+│   │   │   ├── mcp/                # MCP Client
+│   │   │   ├── plugins/            # Plugin Sandbox (isolated-vm)
+│   │   │   ├── models/             # LLM Provider 抽象
+│   │   │   ├── storage/            # SQLite + sqlite-vec + FTS5
+│   │   │   ├── indexer/            # web-tree-sitter 索引
+│   │   │   ├── memory/             # 记忆系统
+│   │   │   ├── security/           # 权限网关 + 审计
+│   │   │   ├── skills/             # Skills Runtime
+│   │   │   ├── hooks/              # Hooks Runtime
+│   │   │   ├── workers/            # Worker Threads (Agent/Tool/Indexer)
+│   │   │   └── shared/             # 共享类型与工具
+│   │   └── package.json
+│   │
+│   ├── api/                        # API 契约层（前后端共享）
+│   │   ├── src/
+│   │   │   ├── protocol.ts         # JSON-RPC 2.0 协议定义
+│   │   │   ├── methods.ts          # API 方法签名
+│   │   │   ├── events.ts           # 事件类型
+│   │   │   └── types.ts            # 共享类型
+│   │   └── package.json
+│   │
+│   ├── server/                     # 后端服务宿主
+│   │   ├── src/
+│   │   │   ├── runtime.ts          # 后端运行时（嵌入 core）
+│   │   │   ├── transports/         # 传输层适配
+│   │   │   │   ├── http.ts         # HTTP + SSE (Fastify)
+│   │   │   │   ├── websocket.ts    # WebSocket (ws)
+│   │   │   │   ├── stdio.ts        # stdio JSON-RPC
+│   │   │   │   ├── ipc.ts          # Electron IPC 适配
+│   │   │   │   └── embedded.ts     # 嵌入式直接调用
+│   │   │   ├── lifecycle.ts        # 服务生命周期
+│   │   │   └── index.ts            # 服务入口
+│   │   └── package.json
+│   │
+│   ├── transport-http/             # HTTP transport 客户端（前端用）
+│   ├── transport-stdio/            # stdio transport 客户端（前端用）
+│   ├── transport-ipc/              # Electron IPC transport 客户端（前端用）
+│   │
+│   ├── model-providers/            # LLM Provider 实现
+│   ├── plugin-sdk/                 # 插件 SDK
+│   ├── skills/                     # 内置 Skills
+│   ├── prompts/                    # 内置 Prompt 模板
+│   ├── hooks/                      # 内置 Hooks
+│   │
+│   ├── ui-components/              # 共享 React 组件（桌面+web 复用）
+│   ├── ui-tui/                     # 共享 TUI 组件（Ink）
+│   │
+│   ├── config/                     # 配置 schema (Zod)
+│   └── types/                      # 共享 TypeScript 类型
+│
+├── plugins/                        # 内置插件
 └── docs/
 ```
 
+**后端运行模式**：
+1. **嵌入式**（默认，桌面/CLI）：直接 import @opencode/core，在同进程内运行，通过 IPC 或 direct call 通信
+2. **服务式**：独立 Node.js 进程，监听 HTTP 端口，多客户端共享
+3. **子进程式**：CLI/TUI 启动后端子进程，通过 stdio 通信
+
 ### 9.3 关键接口契约 (示意)
 
-```rust
+```typescript
 // Agent Core 对外接口
-pub trait AgentEngine {
-    async fn run(&self, input: TaskInput, hooks: HookSet) -> Stream<Event>;
-    async fn pause(&self) -> Checkpoint;
-    async fn resume(&self, cp: Checkpoint) -> Stream<Event>;
-    async fn step(&self) -> StepResult;            // 单步
-    async fn inspect(&self) -> AgentState;          // 可观测
+interface AgentEngine {
+  run(input: TaskInput, hooks: HookSet): AsyncIterable<Event>;
+  pause(): Promise<Checkpoint>;
+  resume(cp: Checkpoint): AsyncIterable<Event>;
+  step(): Promise<StepResult>;            // 单步
+  inspect(): AgentState;                   // 可观测
 }
 
-pub trait Tool {
-    fn meta(&self) -> ToolMeta;
-    async fn invoke(&self, args: Value, ctx: &Ctx) -> ToolResult;
+interface Tool {
+  meta(): ToolMeta;
+  invoke(args: unknown, ctx: Ctx): Promise<ToolResult>;
 }
 
-pub trait Provider {
-    async fn chat(&self, req: ChatRequest) -> Stream<ChatChunk>;
+interface Provider {
+  chat(req: ChatRequest): AsyncIterable<ChatChunk>;
 }
 ```
 
@@ -1158,9 +1252,10 @@ pub trait Provider {
 
 ### 9.6 发布与打包
 
-- 桌面: Tauri bundler (msi/dmg/deb/AppImage)。
-- CLI: 单二进制 (cargo build) + brew / scoop / winget 分发。
-- 自动更新通道: stable / beta / nightly。
+- 桌面: electron-builder (nsis/exe/dmg/AppImage/deb/rpm)。
+- CLI: npm 全局安装 / npx 单次运行 + brew / scoop / winget 分发。
+- 自动更新: electron-updater (stable / beta / nightly 通道)。
+- 代码签名: macOS (Developer ID) / Windows (Authenticode) / Linux (GPG)。
 
 ---
 
@@ -1191,7 +1286,7 @@ pub trait Provider {
 **审视重点**: 架构合理性、性能、安全、可维护性、技术风险。
 
 **发现的问题**:
-1. **P2-01 Rust + Node 双运行时复杂度高**: 插件需要 Node,但核心 Rust,IPC 边界设计需更明确。
+1. **P2-01 Rust + Node 双运行时复杂度高**: 插件需要 Node,但核心 Rust,IPC 边界设计需更明确。（已在 v3.3 迁移至 TypeScript 后解决）
 2. **P2-02 Loop 恢复的非确定性**: LLM 非确定性使「时间旅行回放」不可精确复现,需诚实标注。
 3. **P2-03 向量索引选型风险**: sqlite-vec 生态尚新,大仓库性能存疑。
 4. **P2-04 上下文压缩可能丢关键信息**: 摘要有损,缺乏「信息保全」机制。
@@ -1200,7 +1295,7 @@ pub trait Provider {
 7. **P2-07 配置 schema 演进与向后兼容**: 频繁变更会破坏用户 Profile。
 
 **修订决策**:
-- ✅ **明确 IPC 边界**: 核心 Rust 暴露「能力 API」;插件在 Node Worker 通过 capability 声明访问;不直接共享内存。
+- ✅ **明确 IPC 边界**: 核心 TypeScript 暴露「能力 API」;插件在 Worker Thread 通过 capability 声明访问;不直接共享内存。
 - ✅ **回放诚实模型**: 区分「确定性回放」(工具结果回放) 与「非确定性重放」(LLM 重新生成,标注差异)。
 - ✅ **向量索引可插拔 + 默认 embedded + 性能门槛自动切 LanceDB**;提供 benchmark 自检。
 - ✅ **信息保全**: 关键事实 (决策/约束) 摘要后必须结构化保留;压缩前后做 diff 校验,关键信息丢失告警。
@@ -1264,14 +1359,14 @@ pub trait Provider {
 
 ### 11.2 非功能目标
 
-| 指标 | 目标 |
-|------|------|
-| 冷启动 | < 2s (SSD) |
-| 10 万文件首索引 | < 60s |
-| 空闲内存 | < 300MB |
-| 单任务平均成本 | < $0.5 (Sonnet 级,典型重构) |
-| 安装包大小 | < 25MB (Tauri) |
-| 核心模块测试覆盖 | > 80% |
+| 指标 | v0.1 目标 | v1.0 目标 |
+|------|-----------|-----------|
+| 冷启动 | < 3s (SSD) | < 2s (SSD) |
+| 10 万文件首索引 | < 90s | < 60s |
+| 空闲内存 | < 400MB | < 300MB |
+| 单任务平均成本 | < $0.5 (Sonnet 级) | < $0.3 |
+| 安装包大小 | < 80MB (Electron) | < 60MB (Electron) |
+| 核心模块测试覆盖 | > 70% | > 80% |
 
 ### 11.3 风险与缓解
 
@@ -1318,70 +1413,22 @@ pub trait Provider {
 | Persistence | SQLite WAL + sqlite-vec + YAML config |
 | UI | theme=TokyoNight; layout=focus; keymap=VSCode |
 
-## 附录 C: 数据模型草案 (节选)
+## 附录 C: 数据模型
 
-```sql
--- 会话
-CREATE TABLE sessions (
-  id TEXT PRIMARY KEY,
-  project_id TEXT,
-  profile_id TEXT,
-  title TEXT,
-  created_at INTEGER,
-  updated_at INTEGER,
-  status TEXT,           -- active | archived | forked
-  fork_from TEXT,
-  model_snapshot TEXT    -- JSON
-);
+> 完整数据库 DDL（29 张表）详见 [06-详细设计文档.md](./06-详细设计文档.md) §2.1。
 
--- 消息
-CREATE TABLE messages (
-  id TEXT PRIMARY KEY,
-  session_id TEXT,
-  seq INTEGER,
-  role TEXT,             -- user | assistant | tool | system
-  content TEXT,          -- JSON (含 parts)
-  tool_calls TEXT,       -- JSON
-  prompt_snapshot TEXT,  -- 完整 prompt hash + 引用
-  token_in INTEGER, token_out INTEGER, cost_usd REAL,
-  created_at INTEGER
-);
-
--- 工具调用
-CREATE TABLE tool_calls (
-  id TEXT PRIMARY KEY,
-  message_id TEXT,
-  tool_id TEXT, source TEXT,  -- builtin | plugin | mcp | skill
-  args TEXT, result TEXT,
-  risk TEXT, approved_by TEXT,
-  duration_ms INTEGER, status TEXT,
-  created_at INTEGER
-);
-
--- Loop trace
-CREATE TABLE loop_steps (
-  id TEXT PRIMARY KEY,
-  session_id TEXT, step INTEGER,
-  phase TEXT,            -- perceive | act | observe | reflect
-  payload TEXT,          -- JSON
-  created_at INTEGER
-);
-
--- 记忆
-CREATE TABLE memories (
-  id TEXT PRIMARY KEY,
-  scope TEXT,            -- work | project | global
-  category TEXT,         -- decision | fact | preference | lesson | todo
-  content TEXT, embedding BLOB,
-  created_at INTEGER, updated_at INTEGER
-);
-
--- 审计 (append-only)
-CREATE TABLE audit_log (
-  seq INTEGER PRIMARY KEY AUTOINCREMENT,
-  ts INTEGER, actor TEXT, action TEXT, target TEXT, detail TEXT, signature TEXT
-);
-```
+核心表概览：
+- 会话域: projects, sessions, messages
+- Loop 域: loop_steps, tool_calls, checkpoints
+- Agent 域: sub_agents, agent_messages
+- 记忆域: memories, memory_vectors, memory_consolidation
+- 扩展域: skills, skill_invocations, plugins, plugin_instances, mcp_servers
+- Hook 域: hooks, hook_executions
+- 权限域: permission_rules, approval_requests
+- 配置域: configs, config_history, profiles
+- 索引域: code_chunks, index_meta
+- 观测域: audit_log, model_calls, events
+- 系统域: schema_version
 
 ---
 

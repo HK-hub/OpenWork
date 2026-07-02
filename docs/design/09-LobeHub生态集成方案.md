@@ -1,14 +1,14 @@
-# OpenWork Agent Desktop — LobeHub 生态集成方案
+# OpenCoding — LobeHub 生态集成方案
 
-> **文档版本**: v1.2 (UI 框架优先级策略修订：禁止 antd v6 作为首选)
+> **文档版本**: v1.3 (清理历史决策修订记录，统一为最新决策)
 > **文档类型**: 技术集成决策文档
-> **编写日期**: 2026-06-30 (v1.0) / 2026-07-01 (v1.1) / 2026-07-01 (v1.2)
+> **编写日期**: 2026-06-30 (v1.0) / 2026-07-01 (v1.1) / 2026-07-01 (v1.2) / 2026-07-02 (v1.3)
 > **基于**: 用户指定的 8 个 LobeHub 生态包调研结果 + LobeHub 官方 React 组件编写指南
-> **关联文档**: [08-技术选型与架构方案(实施版).md](./08-技术选型与架构方案(实施版).md) (v3.3)
+> **关联文档**: [08-技术选型与架构方案(实施版).md](./08-技术选型与架构方案(实施版).md) (v3.6)
 
-> **v1.1 变更说明**: 根据用户决策，**@lobehub/editor 由「❌ 不接入」修订为「✅ 核心接入」**，定位为「AI 交互面板输入编辑器」，与 Monaco (代码编辑器) 形成双编辑器架构。本文 §0.1/§0.2/§0.3/§4/§9/§10/附录A/附录B 已同步对齐 [08 文档 §0.3](./08-技术选型与架构方案(实施版).md)。
+> **v1.3 变更说明**: 清理历史决策修订记录（删除 §A.2 v1.1 决策修订记录、§A.3 v1.2 决策修订记录），统一为最新决策；明确 antd v6 + antd-style 仅作为 @lobehub/ui 底层依赖存在，禁止直接使用其原生组件 API。刷新跨文档版本号引用（M18 修复）：关联文档 08 由 v3.4 更新为 v3.6。
 
-> **v1.2 变更说明**: 根据用户决策，**禁止将 antd v6 + antd-style 作为首选 UI 框架**。遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react)，UI 框架优先级调整为：**LobeHub UI（base-ui 无头原语优先）→ @lobehub/ui 高级组件 → 基于 LobeHub UI 封装 → antd v6 兜底 → 自定义实现**。新增 §0.4「UI 组件优先级策略」章节，修订 §1/§1.5/§1.6/§10.1/附录A.3。
+> **v1.2 变更说明**: 根据用户决策，**禁止将 antd v6 + antd-style 作为首选 UI 框架**。遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react)，UI 框架优先级调整为：**LobeHub UI（base-ui 无头原语优先）→ @lobehub/ui 高级组件 → 基于 LobeHub UI 封装 → antd v6 兜底 → 自定义实现**。新增 §0.4「UI 组件优先级策略」章节。
 
 ---
 
@@ -45,11 +45,13 @@
 
 ### 0.2 关键技术关系
 
+> **关键说明**：antd v6 + antd-style 仅作为 @lobehub/ui 的底层依赖存在，**禁止直接使用其原生组件 API**。
+
 ```
-@lobehub/ui (核心 UI)  ←── 依赖 ──→  antd v6 + antd-style
+@lobehub/ui (核心 UI)  ←── 依赖 ──→  antd v6 + antd-style (仅作底层依赖，禁止直接使用)
        │
-       ├── /base-ui 子包 → 无头原语 (Headless Primitives) [v1.2 优先使用]
-       ├── /layout 子包  → Layout/LayoutHeader/LayoutMain/LayoutSidebar/LayoutToc [v1.2 新增]
+       ├── /base-ui 子包 → 无头原语 (Headless Primitives) — 优先使用
+       ├── /layout 子包  → Layout/LayoutHeader/LayoutMain/LayoutSidebar/LayoutToc
        ├── /chat 子包    → ChatItem, ChatList, TokenTag, LoadingDots, ChatHeader
        ├── /mdx 子包     → Markdown 渲染 + LaTeX + 代码高亮
        ├── /base 子包    → ActionIcon, Avatar, Icon, Tooltip 等基础组件
@@ -58,10 +60,10 @@
 @lobehub/icons → 静态 SVG/PNG/WebP，模型品牌图标
 @lobehub/lint  → ESLint + Prettier + Stylelint 统一配置
 @lobehub/tts   → Edge/OpenAI TTS + OpenAI Whisper STT
-@lobehub/editor → Lexical 富文本，AI 交互输入编辑器 [v1.1 新增]
+@lobehub/editor → Lexical 富文本，AI 交互输入编辑器
 ```
 
-### 0.3 双编辑器架构 (v1.1 新增)
+### 0.3 双编辑器架构
 
 > **关键决策**：参考 [08 文档 §3.3 D3.1](./08-技术选型与架构方案(实施版).md)，本项目采用「双编辑器架构」——**Monaco (代码编辑) + @lobehub/editor (AI 交互输入)**，职责严格分离。
 
@@ -102,7 +104,7 @@
 
 ---
 
-### 0.4 UI 组件优先级策略 (v1.2 新增)
+### 0.4 UI 组件优先级策略
 
 > **关键决策**：遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react)，**禁止将 antd v6 + antd-style 作为首选 UI 框架**。antd v6 仅作为 @lobehub/ui 的底层依赖存在，不直接使用其原生组件 API。
 
@@ -163,21 +165,21 @@
 | **包结构** | ESM only，支持 Tree-shaking |
 | **月下载量** | 10 万+ |
 
-### 1.2 子包结构 (v1.2 修订)
+### 1.2 子包结构
 
 ```
 @lobehub/ui
-├── /base-ui    → 无头原语 (Headless Primitives) [v1.2 新增] — 优先使用
+├── /base-ui    → 无头原语 (Headless Primitives) — 优先使用
 │                 Overlay、Form、Navigation、Combobox、Slider、Toast 等
 ├── /chat       → ChatItem, ChatList, TokenTag, LoadingDots, ChatHeader
 ├── /mdx        → Markdown 渲染 (支持 LaTeX 数学公式 + 语法高亮)
 ├── /base       → ActionIcon, Avatar, Icon, Tooltip, 等基础组件
-├── /layout     → Layout/LayoutHeader/LayoutMain/LayoutSidebar/LayoutToc/LayoutFooter [v1.2 新增]
+├── /layout     → Layout/LayoutHeader/LayoutMain/LayoutSidebar/LayoutToc/LayoutFooter
 ├── /theme      → 主题 token 导出
 └── /charts     → (已独立为 @lobehub/charts)
 ```
 
-### 1.2.1 base-ui 无头原语子包 (v1.2 新增)
+### 1.2.1 base-ui 无头原语子包
 
 > **关键说明**：`@lobehub/ui/base-ui` 是 LobeHub 官方推荐的**无头原语子包**，提供完全可访问性 (a11y) 的基础原语，与 antd 解耦，样式由消费方注入。
 
@@ -200,7 +202,7 @@ import { Dialog } from '@lobehub/ui/base-ui';
 import { Modal } from 'antd';
 ```
 
-### 1.2.2 Layout 组件体系 (v1.2 新增)
+### 1.2.2 Layout 组件体系
 
 > **关键说明**：`@lobehub/ui` Layout 组件体系替代原 `react-resizable-panels`，提供与 LobeUI 主题完全一致的布局组件。
 
@@ -298,37 +300,39 @@ interface TokenTagProps {
 | **ActionIconGroup** | 消息操作按钮组 (复制/重试/删除) | P1 |
 | **Markdown (mdx)** | AI 回复的 Markdown 渲染 | P0 |
 | **基础组件 (base)** | 头像、图标、Tooltip 等 | P0 |
-| **Layout 组件体系** [v1.2] | 三栏 AI IDE 布局 | P0 |
-| **base-ui 无头原语** [v1.2] | Overlay/Form/Navigation 基础原语 | P0 |
+| **Layout 组件体系** | 三栏 AI IDE 布局 | P0 |
+| **base-ui 无头原语** | Overlay/Form/Navigation 基础原语 | P0 |
 
-### 1.5 与现有技术栈的关系 (v1.2 修订)
+### 1.5 与现有技术栈的关系
+
+> **关键说明**：antd v6 + antd-style 仅作为 @lobehub/ui 底层依赖存在，**禁止直接使用其原生组件 API**。
 
 ```
 用户技术栈                    @lobehub/ui 能力
 ════════════════════════════════════════════════════
 React 19          ✅ 兼容 (antd v6 原生支持 React 19)
 @lobehub/ui       ✅ 首选 UI 框架（base-ui + 高级组件）
-antd v6           ⚠️ 兜底依赖（@lobehub/ui 底层，禁止直接使用原生 API）
-antd-style        ⚠️ 最后手段（仅用于真正动态样式，禁止 createTheme）
+antd v6           仅作 @lobehub/ui 底层依赖，禁止直接使用原生 API
+antd-style        仅作 @lobehub/ui 底层依赖，禁止直接使用原生 API（禁止 createTheme）
 Zustand           ✅ 状态管理层，与 UI 解耦
 ```
 
-### 1.6 替换关系 (v1.2 修订)
+### 1.6 替换关系
 
-> **v1.2 关键变更**：原表中 `antd + antd-style + @lobehub/ui` 并列关系已修订为 **以 @lobehub/ui 为主，antd v6 + antd-style 作为兜底依赖**。
+> **关键说明**：以 @lobehub/ui 为主，antd v6 + antd-style 仅作为 @lobehub/ui 底层依赖存在，禁止直接使用其原生组件 API。
 
-| 原设计 (v3.0) | 替换为 (v1.2 优先级) | 兜底方案 (P4) | 理由 |
+| 原设计 (v3.0) | 替换为 | 兜底方案 (P4) | 理由 |
 |---------------|---------------------|---------------|------|
 | shadcn/ui + Tailwind | **@lobehub/ui**（base-ui 优先 → 高级组件） | antd v6 | Lobe UI 提供完整 Chat/Markdown/Layout 组件，禁止 antd 作为首选 |
-| react-resizable-panels | **@lobehub/ui** Layout + DraggablePanel | — | LobeHub Layout 与 LobeUI 主题一致 [v1.2 新增] |
+| react-resizable-panels | **@lobehub/ui** Layout + DraggablePanel | — | LobeHub Layout 与 LobeUI 主题一致 |
 | react-markdown | **@lobehub/ui/mdx** | — | Lobe MDX 支持 LaTeX + 语法高亮 + 流式渲染 |
 | lucide-react | **@lobehub/icons** + @lobehub/ui ActionIcon | @ant-design/icons | AI 品牌图标 + LobeUI 通用图标 |
 | 自建 ChatItem/MessageBubble | **@lobehub/ui/chat** | — | 开箱即用，含加载/编辑/错误/操作等完整状态 |
 | 自建 LoadingDots | **@lobehub/ui/chat** | — | 已实现精美加载动画 |
-| CSS Modules / Tailwind | **createStaticStyles** + `cssVar.*` (S1) | antd-style (S3) | 零运行时 CSS-in-JS，模块级样式 [v1.2 新增] |
-| antd Modal/Popover/Tooltip | **@lobehub/ui/base-ui** (Overlay 原语) | antd (兜底) | 无头原语优先 [v1.2 新增] |
-| antd Form/Input/Select | **@lobehub/ui/base-ui** (Form 原语) | antd (兜底) | 无头原语优先 [v1.2 新增] |
-| antd Tabs/Breadcrumb | **@lobehub/ui/base-ui** (Navigation 原语) | antd (兜底) | 无头原语优先 [v1.2 新增] |
+| CSS Modules / Tailwind | **createStaticStyles** + `cssVar.*` (S1) | antd-style (S3) | 零运行时 CSS-in-JS，模块级样式 |
+| antd Modal/Popover/Tooltip | **@lobehub/ui/base-ui** (Overlay 原语) | antd (兜底) | 无头原语优先 |
+| antd Form/Input/Select | **@lobehub/ui/base-ui** (Form 原语) | antd (兜底) | 无头原语优先 |
+| antd Tabs/Breadcrumb | **@lobehub/ui/base-ui** (Navigation 原语) | antd (兜底) | 无头原语优先 |
 
 ---
 
@@ -392,7 +396,7 @@ import { OpenAIIcon, ClaudeIcon, GeminiIcon, DeepSeekIcon } from '@lobehub/icons
 
 ## 4. @lobehub/editor — AI 交互输入编辑器
 
-> **v1.1 修订**：本章由原「❌ 不接入」修订为「✅ 核心接入」，定位由"富文本编辑器"重新定义为「**AI 交互面板输入编辑器**」。代码编辑场景由 Monaco Editor 负责，两者职责分离（参见 §0.3 双编辑器架构）。
+> **定位**：AI 交互面板输入编辑器。代码编辑场景由 Monaco Editor 负责，两者职责分离（参见 §0.3 双编辑器架构）。
 
 ### 4.1 基本信息
 
@@ -406,9 +410,9 @@ import { OpenAIIcon, ClaudeIcon, GeminiIcon, DeepSeekIcon } from '@lobehub/icons
 | **集成位置** | 中间主交互区底部输入框 |
 | **集成阶段** | Phase 1 (Week 2-3) |
 
-### 4.2 决策：✅ 核心接入 (v1.1 修订)
+### 4.2 决策：✅ 核心接入
 
-**修订理由**：
+**接入理由**：
 
 1. **定位重新校准**：@lobehub/editor 不作为代码编辑器，而是作为 **AI 对话输入框**，与 Monaco 职责分离
 2. **Lexical 优势契合 AI 输入场景**：
@@ -575,7 +579,7 @@ const audioBuffer = await tts.createAudio({
 
 ```bash
 # 安装
-pnpm add -D @lobehub/lint
+npm install -D @lobehub/lint
 
 # 自动配置 (交互式)
 npx @lobehub/lint setup
@@ -670,20 +674,20 @@ plugin.json {
 
 ## 9. 集成优先级与路线图
 
-### 9.1 集成阶段总览 (v1.2 修订)
+### 9.1 集成阶段总览
 
 ```
 Phase 0 (Week 1): 基础框架搭建
-├── ✅ @lobehub/ui        → 核心 UI 组件 (ChatItem/ChatList/Markdown/Layout/base-ui) [v1.2]
+├── ✅ @lobehub/ui        → 核心 UI 组件 (ChatItem/ChatList/Markdown/Layout/base-ui)
 ├── ✅ @lobehub/icons      → AI 品牌图标 (模型选择器)
 ├── ✅ @lobehub/lint       → 代码规范配置
-└── ⚠️ antd v6 + antd-style → 兜底依赖（仅 @lobehub/ui 未覆盖时） [v1.2 定位变更]
+└── ⚠️ antd v6 + antd-style → 仅作 @lobehub/ui 底层依赖（禁止直接使用原生 API）
 
 Phase 1 (Week 2-3): 对话功能
 ├── ✅ @lobehub/ui/chat   → ChatItem 消息气泡 + ChatList 列表
 ├── ✅ @lobehub/ui/mdx    → AI 回复 Markdown 渲染
 ├── ✅ @lobehub/icons      → Provider 模型图标
-└── ✅ @lobehub/editor     → AI 交互输入编辑器 (/命令 + @文件 + 附件) [v1.1 新增]
+└── ✅ @lobehub/editor     → AI 交互输入编辑器 (/命令 + @文件 + 附件)
 
 Phase 2 (Week 4-5): Agent 引擎
 ├── ✅ @lobehub/ui/chat   → TokenTag + LoadingDots
@@ -703,23 +707,23 @@ Phase 4+ (v0.3+): 增强体验
 
 | 包 | 决策 | 理由 |
 |----|:---:|------|
-| @lobehub/ui | ✅ 核心接入 | Chat/Markdown/Layout/base-ui 组件开箱即用，**首选 UI 框架** [v1.2] |
+| @lobehub/ui | ✅ 核心接入 | Chat/Markdown/Layout/base-ui 组件开箱即用，**首选 UI 框架** |
 | @lobehub/icons | ✅ 接入 | 模型品牌图标，零成本提升体验 |
 | @lobehub/charts | ✅ 接入 | Phase 3 数据面板，基于 Recharts 成熟稳定 |
-| @lobehub/editor | ✅ 核心接入 | AI 交互输入编辑器，富文本 + 指令芯片 + 附件 (v1.1 修订) |
+| @lobehub/editor | ✅ 核心接入 | AI 交互输入编辑器，富文本 + 指令芯片 + 附件 |
 | @lobehub/tts | ⚠️ 远期 | 非 MVP 核心功能，Phase 4+ 再评估 |
 | @lobehub/lint | ✅ 接入 | 开箱即用代码规范，与 Lobe UI 风格一致 |
 | @lobehub/chat-plugin-sdk | ⚠️ 参考 | LobeChat 专属协议，参考其设计模式 |
 | @lobehub/market-sdk | ⚠️ 远期 | 版本早期，v1.0+ 再评估 |
-| antd v6 + antd-style | ⚠️ 兜底 [v1.2] | @lobehub/ui 底层依赖，**禁止作为首选**，仅当 @lobehub/ui 无法满足时使用 |
+| antd v6 + antd-style | ⚠️ 底层依赖 | @lobehub/ui 底层依赖，**禁止直接使用原生 API**，仅当 @lobehub/ui 无法满足时作为兜底 |
 
 ---
 
 ## 10. 完整依赖清单
 
-### 10.1 Phase 0 核心依赖 (v1.2 修订)
+### 10.1 Phase 0 核心依赖
 
-> **v1.2 修订说明**：antd / antd-style 标注为「**间接依赖/兜底**」，不作为首选 UI 框架；react-resizable-panels 已由 @lobehub/ui Layout 替代，从依赖清单中移除。
+> **说明**：antd / antd-style 标注为「**底层依赖**」，禁止直接使用其原生组件 API；react-resizable-panels 已由 @lobehub/ui Layout 替代，从依赖清单中移除。
 
 ```json
 {
@@ -768,7 +772,7 @@ Phase 4+ (v0.3+): 增强体验
 > **依赖说明**：
 > - **首选 UI 框架**：`@lobehub/ui`（含 base-ui 子包、Layout 组件体系、Chat/MDX 等高级组件）
 > - **antd v6 + antd-style**：作为 `@lobehub/ui` 的底层依赖存在；**禁止**直接使用 antd 原生 API 和 antd-style `createTheme`，仅在 `@lobehub/ui` 完全无法覆盖（如复杂 Table/Tree）时作为兜底
-> - **react-resizable-panels**：v1.2 移除，由 `@lobehub/ui` Layout + DraggablePanel 替代
+> - **react-resizable-panels**：已移除，由 `@lobehub/ui` Layout + DraggablePanel 替代
 
 ### 10.2 Phase 3 新增依赖
 
@@ -797,53 +801,29 @@ Phase 4+ (v0.3+): 增强体验
 
 | 原设计 (v3.0 实施版) | 新方案 (LobeHub 集成) | 变更原因 |
 |----------------------|----------------------|----------|
-| shadcn/ui + Tailwind CSS | **@lobehub/ui**（base-ui 优先 → 高级组件）[v1.2 修订] | Lobe UI 提供完整 Chat/Markdown/Layout 组件，禁止 antd 作为首选 |
-| react-resizable-panels | **@lobehub/ui** Layout + DraggablePanel [v1.2 新增] | LobeHub Layout 与 LobeUI 主题一致 |
+| shadcn/ui + Tailwind CSS | **@lobehub/ui**（base-ui 优先 → 高级组件） | Lobe UI 提供完整 Chat/Markdown/Layout 组件，禁止 antd 作为首选 |
+| react-resizable-panels | **@lobehub/ui** Layout + DraggablePanel | LobeHub Layout 与 LobeUI 主题一致 |
 | react-markdown | **@lobehub/ui/mdx** | 支持 LaTeX + 语法高亮 + 流式渲染 |
 | lucide-react | **@lobehub/icons** + @lobehub/ui ActionIcon | AI 品牌图标 + LobeUI 通用图标 |
 | 自建 ChatItem/MessageBubble | **@lobehub/ui/chat** | 开箱即用，含完整状态处理 |
 | 自建 LoadingDots | **@lobehub/ui/chat** | 已实现精美加载动画 |
 | ESLint + Prettier 手动配置 | **@lobehub/lint** | 统一配置，开箱即用 |
 | 自建图表组件 | **@lobehub/charts** | 基于 Recharts，组件丰富 |
-| 自建 AI 输入框 | **@lobehub/editor** (v1.1 新增) | 富文本 + 指令芯片 + 附件，与 @lobehub/ui 同源 |
+| 自建 AI 输入框 | **@lobehub/editor** | 富文本 + 指令芯片 + 附件，与 @lobehub/ui 同源 |
 | CodeMirror 6 | **Monaco Editor** (保持不变) | 用户指定，IDE 级编辑器 |
-| Tailwind CSS | **createStaticStyles** + `cssVar.*` (S1) → antd-style (S3 兜底) [v1.2 修订] | 全局主题统一 (UI + Monaco + LobeEditor + 终端四色同步) |
-| antd Modal/Form/Tabs 原生 | **@lobehub/ui/base-ui** 无头原语 [v1.2 新增] | 禁止 antd 作为首选，无头原语优先 |
-
-### A.2 v1.1 决策修订记录
-
-> 本表记录 v1.0 → v1.1 的决策修订，保留历史可追溯性。
-
-| # | 包名 | v1.0 决策 | v1.1 决策 | 修订原因 | 影响章节 |
-|:---:|------|-----------|-----------|----------|----------|
-| 1 | **@lobehub/editor** | ❌ 不接入（定位为富文本编辑器，与代码编辑场景不匹配） | ✅ 核心接入（定位为 AI 交互输入编辑器） | 用户决策：作为 AI 对话面板的输入编辑器，与 Monaco 形成双编辑器架构 | §0.1 / §0.3 / §4 / §9 / §10 / 附录 B |
-| 2 | 主题同步架构 | 三色同步（UI + Monaco + 终端） | 四色同步（UI + Monaco + LobeEditor + 终端） | 新增 @lobehub/editor 主题同步 | 附录 B |
-
-### A.3 v1.2 决策修订记录 (v1.2 新增)
-
-> 本表记录 v1.1 → v1.2 的决策修订，保留历史可追溯性。
-
-| # | 维度 | v1.1 决策 | v1.2 决策 | 修订原因 | 影响章节 |
-|:---:|------|-----------|-----------|----------|----------|
-| 1 | **UI 框架首选** | antd v6 + antd-style + @lobehub/ui 并列 | **@lobehub/ui 为主**（base-ui 优先 → 高级组件 → 封装 → antd 兜底） | 用户决策：禁止 antd v6 作为首选，遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react) | §0.4 / §1 / §1.5 / §1.6 / §10.1 / 附录 A |
-| 2 | **CSS-in-JS 方案** | antd-style `createStyles` (核心) | **createStaticStyles** (S1) → 内联 (S2) → antd-style (S3 最后手段) | LobeHub 官方推荐零运行时方案 | §0.4 / §1.6 |
-| 3 | **主题注入** | 直接调用 antd-style `createTheme` | 通过 `@lobehub/ui` ThemeProvider 间接使用 | 禁止直接调用 antd-style `createTheme` | §0.4 / 附录 B |
-| 4 | **布局组件** | react-resizable-panels + 自建 | **@lobehub/ui Layout 组件体系** + DraggablePanel | 与 LobeUI 主题一致，开箱即用 | §0.4 / §1.2.2 / §1.6 / §10.1 |
-| 5 | **antd v6 定位** | 核心 UI 框架 | **兜底依赖**（仅当 @lobehub/ui 无法满足时） | 禁止 antd 作为首选 | §0.4 / §1.5 / §1.6 / §10.1 |
-| 6 | **antd-style 定位** | 核心 CSS-in-JS 方案 | **最后手段**（仅用于真正动态样式） | LobeHub 官方样式优先级策略 | §0.4 / §1.5 / §1.6 / §10.1 |
+| Tailwind CSS | **createStaticStyles** + `cssVar.*` (S1) → antd-style (S3 兜底) | 全局主题统一 (UI + Monaco + LobeEditor + 终端四色同步) |
+| antd Modal/Form/Tabs 原生 | **@lobehub/ui/base-ui** 无头原语 | 禁止 antd 作为首选，无头原语优先 |
 
 ---
 
 ## 附录 B: 主题系统设计
 
-### B.1 四色同步架构 (v1.1 修订)
+### B.1 四色同步架构
 
-> **v1.1 修订**：由 v1.0 的「三色同步」(UI + Monaco + 终端) 修订为「四色同步」(UI + Monaco + **LobeEditor** + 终端)，新增 @lobehub/editor 主题同步。
->
-> **v1.2 补充**：UI 层主题通过 `@lobehub/ui` ThemeProvider 注入，**禁止**直接调用 `antd-style` `createTheme` API。
+> **关键决策**：采用「四色同步」(UI + Monaco + **LobeEditor** + 终端)，覆盖 @lobehub/editor 主题同步。UI 层主题通过 `@lobehub/ui` ThemeProvider 注入，**禁止**直接调用 `antd-style` `createTheme` API。
 
 ```typescript
-// 通过 @lobehub/ui ThemeProvider 注入主题（v1.2 推荐方式）
+// 通过 @lobehub/ui ThemeProvider 注入主题（推荐方式）
 import { ThemeProvider } from '@lobehub/ui';
 
 // 主题 token
@@ -879,7 +859,7 @@ function syncMonacoTheme(antdTokens: ThemeToken) {
   });
 }
 
-// @lobehub/editor 主题同步 (色 3, v1.1 新增)
+// @lobehub/editor 主题同步 (色 3)
 function syncLobeEditorTheme(antdTokens: ThemeToken) {
   // @lobehub/editor 基于 Lexical，通过 ThemeProvider 注入
   // 与 antd-style token 保持一致
@@ -918,10 +898,10 @@ function syncTerminalTheme(antdTokens: ThemeToken) {
 
 | # | 色彩层 | 覆盖组件 | 同步函数 | 状态 |
 |:---:|:---:|----------|----------|:---:|
-| 1 | UI 层 | @lobehub/ui (Chat/Markdown/Layout/base-ui) + antd v6 兜底 | @lobehub/ui ThemeProvider [v1.2] | ✅ v1.0 |
-| 2 | Monaco 层 | @monaco-editor/react (代码编辑/Diff) | syncMonacoTheme | ✅ v1.0 |
-| 3 | LobeEditor 层 | @lobehub/editor (AI 输入/指令芯片/附件) | syncLobeEditorTheme | ✅ v1.1 新增 |
-| 4 | 终端层 | xterm.js (终端输出) | syncTerminalTheme | ✅ v1.0 |
+| 1 | UI 层 | @lobehub/ui (Chat/Markdown/Layout/base-ui) + antd v6 兜底 | @lobehub/ui ThemeProvider | ✅ |
+| 2 | Monaco 层 | @monaco-editor/react (代码编辑/Diff) | syncMonacoTheme | ✅ |
+| 3 | LobeEditor 层 | @lobehub/editor (AI 输入/指令芯片/附件) | syncLobeEditorTheme | ✅ |
+| 4 | 终端层 | xterm.js (终端输出) | syncTerminalTheme | ✅ |
 
 ---
 
