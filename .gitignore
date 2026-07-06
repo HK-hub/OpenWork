@@ -60,3 +60,14 @@ playwright-report/
 
 # Dev userData (sandbox workaround)
 .dev-userdata/
+
+# Runtime data
+data/
+.runtime/
+opencode.db
+opencode.db-journal
+opencode.db-wal
+opencode.db-shm
+
+# Migration lock
+*.migration.lock
