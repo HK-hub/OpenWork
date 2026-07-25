@@ -1,13 +1,19 @@
 # OpenCoding Agent Desktop — 产品需求文档 (PRD)
 
-> **文档版本**: v2.3 (v0.1 范围收缩：多客户端需求降级 + 风险登记册补全)
+> **文档版本**: v2.4 (Harness 能力对标 + 四能力域补齐 + CS 分离契约指针 + UI/LobeHub 退役)
 > **文档类型**: Product Requirements Document
 > **审视视角**: 产品经理 (PM) / 项目总监 (PMO) / QA
-> **参考对标**: Claude Code / Codex CLI / OpenCode / Cursor / Cline
+> **参考对标**: pi agent / Claude Code / Codex CLI / OpenCode / Cursor / Cline
 >
 > **v2.3 变更说明**: 根据 07-多角色审视评估报告 §1.1 (S1)、§4.4 (M10) 与 §8.3 总体结论，收缩 v0.1 范围为"Desktop (嵌入式) + 4 模块 + 12 表 + 6-8 周"。具体调整：§1.1 产品定义增加 v0.1 阶段性说明；§3.9 多客户端需求中 REQ-UI-008 (TUI) 与 REQ-UI-010 (CLI) 优先级由 P1 降级为 P2，并新增 v0.1 仅交付 Desktop 客户端的说明；§2.2 需求统计表"多客户端"行拆分为"Desktop 客户端"与"多客户端 (TUI/Web/CLI/Custom)"两行并更新总计；§8 风险登记册新增 R14~R18 共 5 项前后端分离架构相关风险 (JSON-RPC 序列化开销、isolated-vm V8 耦合、monorepo 构建复杂度、better-sqlite3 跨 Worker 限制、v0.1 收缩导致用户流失)。
 >
 > **v2.2 变更说明**: 前后端分离架构对齐：产品需求从单一桌面端扩展为多客户端平台（Desktop/TUI/Web/CLI）。新增 REQ-UI-008 TUI 客户端、REQ-UI-009 Web 客户端、REQ-UI-010 CLI 客户端需求。更新风险登记册移除 Tauri 相关风险。
+>
+> **v2.4 变更说明 (Harness 能力对齐版)**: 根据 pi agent / Claude Code CLI / OpenCode / Codex CLI 的核心能力与 harness 能力清单批判式审查，补齐四类缺失能力并修复跨文档冲突：
+> - **新增需求域与 REQ**: SCHED (定时任务) REQ-SCHED-001~004 / GOAL (目标管理) REQ-GOAL-001~005 / PROMPT (提示词管理) REQ-PROMPT-001~006 / PROVIDER (Provider 抽象接入) REQ-PROVIDER-001~004，共新增 **19 项需求**。
+> - **修复冲突**: ① §4.1 性能指标将陈旧 Tauri 标注修正为 Electron（与 §1.1/§3.9 架构一致）；② §6.1 "不包含" 列表与 doc01 §6.2 路线图双向对齐：Hooks/动态结果调整/成本仪表盘/导出导入/Onboarding 统一为 v0.2；③ §3.3 REQ-TOOL-004 与 §6.1 v0.1 "5 个 Provider" 明确为"v0.1 落地子集为 5 个，抽象层全量 Provider 适配器在 v0.2+ 增补"；④ §3.5 REQ-DATA-001 表清单与 doc01 §4.5.1 对齐为"全景 20 表 / v0.1 落地 12 表"。
+> - **harness 对标**: 新增 §1.4「Harness 能力对标清单」指针，引用 01-产品功能文档 §1.6 矩阵。
+> - **需求统计**: 新增 4 域 19 项需求后，需求总数由 181 调整为 **200**，P0 仍维持 19 项（新增能力均为 P1/P2，不冲击 MVP）。
 >
 > **v2.1 变更说明**: 根据用户决策，**禁止将 antd v6 + antd-style 作为首选 UI 框架**。遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react)，UI 框架优先级调整为：**LobeHub UI（base-ui 无头原语优先）→ @lobehub/ui 高级组件 → 基于 LobeHub UI 封装 → antd v6 兜底 → 自定义实现**。新增需求 **REQ-UI-007: UI 框架优先级策略**。详见 [09 文档 v1.2 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 v3.3](./08-技术选型与架构方案(实施版).md)。
 
@@ -29,6 +35,10 @@
   - [3.9 多客户端需求](#39-多客户端需求)
   - [3.10 可观测与调试需求](#310-可观测与调试需求)
   - [3.11 安全与合规需求](#311-安全与合规需求)
+  - [3.12 定时任务与调度需求 (v2.4 新增)](#312-定时任务与调度需求-v24-新增)
+  - [3.13 目标管理需求 (v2.4 新增)](#313-目标管理需求-v24-新增)
+  - [3.14 提示词管理需求 (v2.4 新增)](#314-提示词管理需求-v24-新增)
+  - [3.15 AI Provider 抽象接入需求 (v2.4 新增)](#315-ai-provider-抽象接入需求-v24-新增)
 - [4. 非功能需求](#4-非功能需求)
 - [5. 需求优先级矩阵](#5-需求优先级矩阵)
 - [6. MVP 范围定义](#6-mvp-范围定义)
@@ -64,6 +74,17 @@ OpenCoding Agent Desktop 是一款开源、本地优先、高度可配置的 Cod
 | AI/Agent 研究者 | 10% | 实验、观测、对比 |
 | 学习者/教学者 | 5% | 学习、教学 |
 
+### 1.4 Harness 能力对标清单 (v2.4 新增)
+
+本产品以 pi agent / Claude Code CLI / OpenCode / Codex CLI 的核心能力与 harness 能力清单为基线，确保 18 项能力维度全覆盖。完整的 36 项能力 × 5 产品对标矩阵见 **[01-产品功能文档 §1.6](./01-产品功能文档.md#16-harness-能力全景对标清单-v24-新增)**。下表仅列出本 PRD 新增四域（v2.4）对应的能力指针：
+
+| 能力维度 | 对标现状 | 本产品覆盖需求 |
+|----------|----------|----------------|
+| AI Provider 全兼容抽象接入 | Claude Code 单一/部分；OpenCode 多 | REQ-PROVIDER-001~004 + REQ-TOOL-004 |
+| 提示词管理 (模板/版本/分享/A-B) | 各家仅部分可看 | REQ-PROMPT-001~006 |
+| 目标管理 (Goal 跨会话续作) | 各家仅一次性 Task | REQ-GOAL-001~005 |
+| 定时任务 (cron/interval/event 调度) | 缺失/仅手工 | REQ-SCHED-001~004 |
+
 ---
 
 ## 2. 需求总览
@@ -72,7 +93,7 @@ OpenCoding Agent Desktop 是一款开源、本地优先、高度可配置的 Cod
 
 ```
 REQ-{域}-{序号}  例: REQ-AGENT-001
-域: AGENT(核心引擎) | CTX(上下文) | TOOL(工具) | CHAT(对话交互) | DATA(持久化) | CFG(配置化) | EXT(扩展) | MIG(迁移) | UI(多客户端) | OBS(可观测) | SEC(安全)
+域: AGENT(核心引擎) | CTX(上下文) | TOOL(工具) | CHAT(对话交互) | DATA(持久化) | CFG(配置化) | EXT(扩展) | MIG(迁移) | UI(多客户端) | OBS(可观测) | SEC(安全) | SCHED(定时任务, v2.4) | GOAL(目标管理, v2.4) | PROMPT(提示词管理, v2.4) | PROVIDER(Provider 抽象接入, v2.4)
 ```
 
 ### 2.2 需求统计
@@ -93,7 +114,11 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 | 多客户端 (TUI/Web/CLI/Custom, REQ-UI-008~011) | 0 | 0 | 4 | 0 | 4 |
 | 可观测与调试 | 0 | 10 | 4 | 2 | 16 |
 | 安全与合规 | 2 | 7 | 3 | 2 | 14 |
-| **合计** | **19** | **102** | **41** | **19** | **181** |
+| 定时任务与调度 (v2.4 新增) | 0 | 2 | 2 | 0 | 4 |
+| 目标管理 (v2.4 新增) | 0 | 3 | 2 | 0 | 5 |
+| 提示词管理 (v2.4 新增) | 0 | 4 | 2 | 0 | 6 |
+| Provider 抽象接入 (v2.4 新增) | 0 | 2 | 2 | 0 | 4 |
+| **合计 (v2.4)** | **19** | **113** | **49** | **19** | **200** |
 
 ---
 
@@ -355,6 +380,8 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 - [ ] Fallback: 主模型失败自动切换到备选链
 - [ ] 成本控制: 会话级+日级+项目级预算
 
+> **v0.1 落地范围澄清 (v2.4)**: 上述全量 Provider 适配器为长期目标 (对应 REQ-PROVIDER-001~004)。**v0.1 仅落地 5 个 Provider**: OpenAI / Anthropic / Google / Ollama / 任意 OpenAI 兼容端点 (作为一项通用 Adapter)。Azure / Bedrock / Mistral / Cohere / DeepSeek / Grok / OpenRouter / llama.cpp / vLLM / LM Studio 等在 v0.2+ 增补，自定义接入 SDK 在 v0.3。Adapter 契约与能力自描述 (REQ-PROVIDER-002) 在 v0.1 已需具备以支撑上述 5 个 Provider 的统一抽象。
+
 #### REQ-TOOL-005: 审计日志 [P1]
 
 **描述**: 所有工具调用记录到审计日志。
@@ -491,6 +518,8 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 - [ ] WAL 模式，支持并发读写
 - [ ] 外键约束保证数据完整性
 - [ ] 自动定期备份
+
+> **表范围澄清 (v2.4)**: 全景数据库共 **20 张表** (含 v2.4 新增 config_history / goals / scheduled_tasks / prompt_templates / providers)。**v0.1 仅落地 12 张核心表**: sessions / messages / tool_calls / loop_steps / configs / config_history / mcp_servers / profiles / audit_log / model_calls / checkpoints / providers；其余表 (memories / skills / sub_agents / commands / hooks / goals / scheduled_tasks / prompt_templates / index_meta) 随对应能力在 v0.2~v0.4 经 schema 迁移系统增量建表 (见 REQ-DATA-005)。本 REQ 的验收标准描述全景表清单，v0.1 验收时仅校验已启用的 12 张。
 
 #### REQ-DATA-002: 配置数据库化 [P0] (核心亮点)
 
@@ -797,17 +826,19 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 - [ ] 生成首个 Profile
 - [ ] 可跳过，稍后配置
 
-#### REQ-UI-007: UI 框架优先级策略 [P0]
+#### REQ-UI-007: UI 框架优先级策略 [P0] (v2.4 重置)
 
-**描述**: 遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react)，**禁止将 antd v6 + antd-style 作为首选 UI 框架**。UI 组件选型遵循 5 级降序优先级：`@lobehub/ui/base-ui` 无头原语（优先）→ `@lobehub/ui` 高级组件 → 基于 LobeHub UI 的项目封装 → antd v6 兜底 → 自定义实现。界面布局统一使用 **@lobehub/ui Layout 组件体系**（替代 react-resizable-panels 方案）。详见 [09 文档 v1.2 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 v3.3](./08-技术选型与架构方案(实施版).md)。
+**描述** (v2.4 重置): **退役 LobeHub 生态** (文档 09-LobeHub生态集成方案.md 已删除；原 v2.1 LobeHub UI 优先级策略失效)。Desktop 客户端 UI 框架切换为 **Ant Design v5 + Tailwind CSS v4** 双轨：业务组件 (Table/Tree/Form/Modal/Drawer/Notification/Select/Tabs/Menu 等) 采用 antd v5 原生 API；布局/间距/色彩系统/暗色模式采用 Tailwind utility；可拖拽面板用 `react-resizable-panels 2.1`；Markdown 渲染用 `react-markdown + rehype/remark` 插件链；AI 输入编辑器用 TipTap v2 (见 REQ-UI-005)。AI Chat 业务组件 (ChatPanel/MessageList/LoopTrace 等由项目自建)。详见 [05 文档 v4.3 §4/§6](./05-技术选型文档.md)、[08 文档 v3.8 §3.2/§3.3](./08-技术选型与架构方案(实施版).md) 与 [04 文档 v4.3 §5](./04-架构设计文档.md)。
 
-**验收标准**:
-- [ ] 项目代码中不出现「antd v6 作为首选 UI 框架」的导入模式（antd v6 仅作为 @lobehub/ui 底层依赖或兜底使用）
-- [ ] 基础原语（Overlay/Form/Navigation 等）优先取自 `@lobehub/ui/base-ui`，禁止同名根导出与 base-ui 并存
-- [ ] 高级组件优先取自 `@lobehub/ui`（Chat/Markdown/Layout/DraggablePanel/ActionIcon 等）
-- [ ] 仅当 @lobehub/ui 完全无法满足时（如复杂 Table/Tree）才使用 antd v6 原生 API 作为兜底
-- [ ] 应用主框架布局基于 @lobehub/ui 的 Layout/LayoutHeader/LayoutMain/LayoutSidebar/LayoutToc 组件实现
-- [ ] 组件优先级策略在 [09 文档 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 §3.3](./08-技术选型与架构方案(实施版).md) 中保持一致
+**验收标准** (v2.4 重置):
+- [ ] 项目代码中不出现 `import ... from '@lobehub/*'` 与 `antd-style createTheme` 等 v2.4 退役依赖 (CI lint 规则强制)
+- [ ] 业务组件 (Table/Tree/Form/Modal/Drawer/Notification/Select/Tabs/Menu/Tooltip/Dropdown) 来自 antd v5 原生 API
+- [ ] 布局/间距/色彩/响应式/暗色模式用 Tailwind utility class (与 antd 经 ConfigProvider prefix 隔离)
+- [ ] 三栏可拖拽面板基于 `react-resizable-panels 2.1` 实现 (替代 @lobehub/ui DraggablePanel)
+- [ ] Markdown 渲染由 react-markdown + rehype-raw + rehype-highlight + remark-gfm + remark-math + rehype-katex 统一封装为 `<MarkdownRenderer>`
+- [ ] AI Prompt 输入富文本编辑器基于 TipTap v2 + ProseMirror 实现 (见 REQ-UI-005)
+- [ ] antd + Tailwind 共存需通过 `tailwind.config.ts` 设置 prefix 或 antd ConfigProvider 隔离，避免 utility 与 antd 内联样式冲突
+- [ ] UI 框架策略 (本 REQ) 在 05 v4.3 §4 / 08 v3.8 §3.2 / 04 v4.3 §5 / coding v1.4 §9.x 中保持一致
 
 #### REQ-UI-008: TUI 客户端 [P2]
 
@@ -964,6 +995,214 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 
 ---
 
+### 3.12 定时任务与调度需求 (v2.4 新增)
+
+#### REQ-SCHED-001: 调度器核心 [P1]
+
+**描述**: 内置 Agent 调度器，支持 cron / interval / event / once 四种触发形态 (见 01 §4.14)。
+
+**验收标准**:
+- [ ] 支持 cron 表达式 (5/6/7 段)
+- [ ] 支持 interval (秒级)
+- [ ] 支持 event 触发 (on_commit / on_idle / on_cost_warn)
+- [ ] 支持 once 延迟执行
+- [ ] 任务定义持久化到 scheduled_tasks 表；执行实例写 scheduled_task_runs
+- [ ] 调度器崩溃后能从持久化状态恢复 (不丢任务、不重复执行)
+
+#### REQ-SCHED-002: 调度任务定义与绑定 [P1]
+
+**描述**: 定时任务支持复用 Profile / Persona / Skills / MCP 子集。
+
+**验收标准**:
+- [ ] 任务可绑定 Persona 与 Skills 子集
+- [ ] 任务绑定 MCP Server 白名单 (默认仅只读)
+- [ ] 任务声明独立预算上限 (不占用主会话预算)
+- [ ] 任务声明 IO 模式: silent / notify / interactive
+
+#### REQ-SCHED-003: 调度安全与速率限制 [P2]
+
+**描述**: 防止定时任务失控。
+
+**验收标准**:
+- [ ] 默认只读权限；破坏性操作须显式声明并预先审批
+- [ ] 启用周期性破坏性任务前强制一次 dry-run 预演
+- [ ] 全局并发上限 + 单任务速率限制可配置
+- [ ] 全量调用写入审计日志 (与手工调用同一通道)
+- [ ] 失败策略可配置: retry / skip / escalate / halt
+
+#### REQ-SCHED-004: 调度可观测 [P2]
+
+**描述**: 调度可视化与告警。
+
+**验收标准**:
+- [ ] 调度日历视图 (下次执行预测)
+- [ ] 运行历史时间线
+- [ ] 失败告警经系统通知 (复用 Desktop 通知)
+- [ ] 运行详情可导出
+
+---
+
+### 3.13 目标管理需求 (v2.4 新增)
+
+#### REQ-GOAL-001: Goal 实体与持久化 [P1]
+
+**描述**: 跨会话的 Goal 实体管理 (见 01 §4.15)。
+
+**验收标准**:
+- [ ] goals 表持久化目标: 标题/描述/验收标准/优先级/状态/父子/时间窗/进度
+- [ ] 支持 OKR 式父子分解
+- [ ] Goal 可关联会话/记忆/定时任务/GitHub Issue
+- [ ] Goal 状态: backlog / active / blocked / done / abandoned
+
+#### REQ-GOAL-002: Goal 分解工具 [P1]
+
+**描述**: Agent 可将自然语言目标拆分为子目标 + 验收标准。
+
+**验收标准**:
+- [ ] 提供 goal_decompose 工具
+- [ ] 产出子目标 + 验收标准 (可机器/人工判定)
+- [ ] 结果归属到当前活跃 goal
+- [ ] 分解结果可编辑 (用户可纠正)
+
+#### REQ-GOAL-003: 跨会话续作 [P2]
+
+**描述**: 重启会话时自动恢复活跃 goal 的上下文。
+
+**验收标准**:
+- [ ] 上下文锚点: 目标保存跨会话工作上下文快照
+- [ ] 新会话启动时可列出活跃 goal
+- [ ] 选择 goal 后自动 resume 锚点上下文
+- [ ] Planning Loop 产出的 DAG 自动归属到活跃 goal
+
+#### REQ-GOAL-004: 进度自评与升级 [P2]
+
+**描述**: Agent 周期性自评目标进度。
+
+**验收标准**:
+- [ ] Reflect Loop 对照验收标准更新进度
+- [ ] 进度指标: 子任务完成率 / 验收项达成率 / 自动评估分数
+- [ ] 连续 K 次自评无进展 → 升级为人工介入并通知
+- [ ] 自评过程写入 Loop Trace
+
+#### REQ-GOAL-005: 里程碑与回溯 [P2]
+
+**描述**: 目标的里程碑与历史回溯。
+
+**验收标准**:
+- [ ] 可标记关键节点为里程碑
+- [ ] 回溯某 goal 的全部关联会话与变更
+- [ ] 里程碑达成触发通知与可选归档
+
+---
+
+### 3.14 提示词管理需求 (v2.4 新增)
+
+> **澄清**: §3.10 REQ-OBS-002 Prompt Inspector 仅负责"只读查看"。本节定义"可读可写可版本可实验"的提示词工程平台 (见 01 §4.16)。
+
+#### REQ-PROMPT-001: 提示词模板库 [P1]
+
+**描述**: 命名模板库，支持变量插值与条件块。
+
+**验收标准**:
+- [ ] prompt_templates 表持久化
+- [ ] 变量插值 `{{var}}` 与条件块 `{{#if}}`
+- [ ] 作用域: global / project / persona / session，叠加优先级
+- [ ] 内置种子模板: planning / reflect / recovery / summarize / commit / pr / code_review / debug / tdd / migration (≥10)
+
+#### REQ-PROMPT-002: 七层独立编辑 [P1]
+
+**描述**: 七层洋葱模型每层可独立编辑。
+
+**验收标准**:
+- [ ] 每层独立编辑、单独版本化、单独 diff
+- [ ] 保留默认层并支持 Layer override
+- [ ] 编辑后即时热加载
+
+#### REQ-PROMPT-003: 模型适配变体 [P2]
+
+**描述**: 同一模板声明多模型变体。
+
+**验收标准**:
+- [ ] 按 Provider 自动选择变体 (Anthropic system-as-role / OpenAI system message / 本地模型限制)
+- [ ] 变体缺失时回退到默认变体并告警
+- [ ] 变体缓存避免重复渲染
+
+#### REQ-PROMPT-004: 版本化与回滚 [P2]
+
+**描述**: 模板变更版本化。
+
+**验收标准**:
+- [ ] 每次修改生成版本快照
+- [ ] 可 diff / 回滚 / 标记 released
+- [ ] 企业可锁定某些层为只读 (合规)
+
+#### REQ-PROMPT-005: Prompt Playground [P1]
+
+**描述**: 离线调试模板。
+
+**验收标准**:
+- [ ] 选模板 → 注入变量 → 调用模型 → 查看输出 (不触发真实 Loop)
+- [ ] 多模板并排对比输出
+- [ ] 调用计入审计但可标"调试"避免污染主统计
+
+#### REQ-PROMPT-006: A/B 实验 [P2]
+
+**描述**: 两版本按比例分流对比。
+
+**验收标准**:
+- [ ] 定义 A/B 比例 (权重)
+- [ ] 指标采集: 成功率 / 成本 / 满意度
+- [ ] 显著性提示 (接 §4.13 A/B 框架)
+- [ ] 实验 winner 可一键发布为 released
+
+---
+
+### 3.15 AI Provider 抽象接入需求 (v2.4 新增)
+
+> **澄清**: §3.3 REQ-TOOL-004 已定义"多模型 Provider 抽象"。本节针对偏补齐"全部兼容抽象接入"与"自定义接入 SDK"的细节 (见 01 §4.3.5)。v0.1 落地 5 个 Provider (OpenAI/Anthropic/Google/Ollama/任意 OpenAI 兼容)，其余 Adapter 在 v0.2+ 增补；自定义接入 SDK 主要在 v0.3。
+
+#### REQ-PROVIDER-001: Provider Registry 与热插拔 [P1]
+
+**描述**: 统一注册表，运行时可装载。
+
+**验收标准**:
+- [ ] providers 表持久化 Provider 配置
+- [ ] 启动时按配置加载，支持运行时启用/禁用 (热插拔)
+- [ ] Plugin 系统注入的 Adapter 与内置 Adapter 等同进入 Registry
+- [ ] Registry 冲突检测 (重复 Adapter id)
+
+#### REQ-PROVIDER-002: Adapter 契约与能力自描述 [P1]
+
+**描述**: 统一 Adapter 接口与能力位。
+
+**验收标准**:
+- [ ] AIProviderAdapter 接口: chat/stream/countTokens/tools/capabilities
+- [ ] 能力位: streaming/tool_call/vision/json_mode/parallel_tool/prompt_caching/thinking/system_as_role
+- [ ] 缺失能力走 polyfill 并告警
+- [ ] 屏蔽流式协议/工具调用协议/系统消息位置/stop 序列差异
+
+#### REQ-PROVIDER-003: 路由 / Fallback / 计价 [P2]
+
+**描述**: 路由与降级链。
+
+**验收标准**:
+- [ ] Router 按任务类型/成本/延迟/能力位自动选 Provider
+- [ ] 主 Provider 失败沿 fallback 链降级；Ollama 作为底线
+- [ ] 内置主流模型 $/Mtok 计价表；自定义 Provider 可声明计价函数
+- [ ] 成本归因到调用 (写入 model_calls)
+
+#### REQ-PROVIDER-004: 自定义接入 SDK [P2]
+
+**描述**: 用户/企业自定义 Provider 接入。
+
+**验收标准**:
+- [ ] 发布 @opencode/ai-sdk 包，提供 AIProviderAdapter 类型与脚手架
+- [ ] 自定义 Adapter npm 包经 Plugin 系统注册到 Registry
+- [ ] 享受与内置 Provider 同一的调用/计费/审计/Fallback 待遇
+- [ ] 企业网关支持 refresh token 借用与私有端点
+
+---
+
 ## 4. 非功能需求
 
 ### 4.1 性能
@@ -976,7 +1215,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 | 空闲内存 | < 400MB | < 300MB | 无会话运行 |
 | 单会话内存 | < 1.5GB | < 1GB | 50 轮对话后 |
 | 流式首字延迟 | < 800ms | < 500ms | 从发送到首个 token |
-| 安装包大小 | < 30MB (Tauri) | < 25MB (Tauri) | 压缩后 |
+| 安装包大小 | < 50MB (Electron, v2.4 修正) | < 30MB (Electron, 优化后) | 压缩后；v2.4 修正陈旧的 Tauri 标注，与 §1.1/§3.9 Electron 架构一致。注：v0.1 基线放宽至 50MB 以兼容三平台原生模块 (monaco/xterm/better-sqlite3/isolated-vm) |
 
 ### 4.2 可靠性
 
@@ -1054,7 +1293,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 | REQ-EXT-001 | MCP 一等公民 | 扩展 | 工具生态基础 |
 | REQ-UI-001 | 桌面应用框架 | 桌面 | 桌面端基础 |
 | REQ-UI-002 | 多面板布局 | 桌面 | 多面板工作区 |
-| REQ-UI-007 | UI 框架优先级策略 | 桌面 | 禁止 antd v6 作为首选，统一 LobeHub UI 技术栈 |
+| REQ-UI-007 | UI 框架优先级策略 | 桌面 | v2.4 重置：退役 LobeHub UI；统一 Ant Design v5 + Tailwind v4 技术栈 (TipTap v2 + react-markdown + react-resizable-panels) |
 | REQ-SEC-001 | API Key 安全存储 | 安全 | 安全底线 |
 | REQ-SEC-002 | 沙箱执行 | 安全 | 安全底线 |
 
@@ -1098,10 +1337,15 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 - Diff 交互 → v0.2
 - @提及系统 → v0.2
 - 多会话管理 → v0.2
-- Loop Trace 调试器 → v0.3
-- Prompt Inspector → v0.3
+- Loop Trace 调试器 → v0.2 (v2.4 从 v0.3 提前，见 doc01 §6.2)
+- Prompt Inspector (只读) → v0.2 (v2.4 从 v0.3 提前)
 - 成本分析仪表盘 → v0.2
 - 自定义工具 → v0.3
+- 提示词管理 (模板/版本/Playground) → v0.2
+- 提示词管理 (A/B 实验) → v0.4
+- Provider 抽象接入 SDK (企业自定义) → v0.3
+- 目标管理 (Goal System) → v0.3
+- 定时任务 (调度系统) → v0.4
 - 外部编辑器桥接 → v0.4
 - 跨平台同步 → v0.5
 - 团队配置共享 → v0.5

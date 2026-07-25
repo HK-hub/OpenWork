@@ -1,16 +1,20 @@
 # OpenCoding Agent Desktop — 完整产品设计文档
 
-> **文档版本**: v1.3 (对齐 v4.2 架构，更新产品形态为多客户端分阶段交付)
+> **文档版本**: v1.4 (UI 栈重置 + CS 分离深化 + DDD 持久化 + 四能力域同步)
 > **文档类型**: 产品需求 + 技术架构 + 工程实现规格 (PRD + TRD 合订)
 > **审视视角**: 产品经理 (PM) / 技术总监 (CTO) / 项目总监 (PMO)
 > **参考对标**: OpenCode Desktop / Claude Code / Codex CLI / Cursor / Cline / Aider
-> **开源协议**: Apache-2.0
+> **开源协议**: MIT
 >
-> **v1.1 变更说明**: 根据用户决策，**禁止将 antd v6 + antd-style 作为首选 UI 框架**。遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react)，UI 框架优先级调整为：**LobeHub UI（base-ui 无头原语优先）→ @lobehub/ui 高级组件 → 基于 LobeHub UI 封装 → antd v6 兜底 → 自定义实现**。新增设计决策 **D9.3: UI 框架优先级策略**，界面布局统一使用 @lobehub/ui Layout 组件体系（替代 react-resizable-panels 方案）。详见 [09 文档 v1.2 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 v3.3 §3.3](./08-技术选型与架构方案(实施版).md)。
+> **v1.4 变更说明 (UI 栈重置 + CS 分离深化 + DDD 持久化 + 四能力域同步)**:
+> - **UI 栈重置**: 全面**退役** LobeHub 生态 (文档 09 已删除，原 v1.1/v1.2 的 LobeHub UI 优先级策略失效)；改用 **Ant Design v5 + Tailwind CSS v4** 双轨；AI 输入编辑器改用 **TipTap v2 + ProseMirror** (替代 @lobehub/editor)；Markdown 改用 react-markdown + rehype/remark；可拖拽面板改用 react-resizable-panels 2.1；设计决策 D9.3 重置 (见 §9.x)。详见 05 v4.3 §4/§6、08 v3.8 §3.2/§3.3、04 v4.3 §5。
+> - **CS 分离深化**: 确立 OpenCode-style 客户端-服务端分离为**主架构**。v0.1 **仅交付 Desktop 客户端** (Embedded 模式 + Electron IPC Transport)，但服务契约 (§9.3)、Transport 抽象、Client SDK 已为后续 TUI/Web/CLI 接入预留扩展点。客户端扩展性通过 `@opencode/api` 公开契约保证。
+> - **DDD 持久化**: §5 持久化能力明确所有数据库接口/查询/操作经 **DDD Repository 接口隔离层** (domain 接口 / infra SQLite 实现 + Drizzle ORM 查询构造)，业务层零 SQL 耦合；可替换为 Remote/Postgres 实现而业务层零修改。详见 04 v4.3 §11.9、05 v4.3 §22、06 v4.3 §2.8。
+> - **四能力域同步**: 与 01 v2.4 / 02 v2.4 同步新增 SCHED (定时任务 v0.4) / GOAL (目标管理 v0.3) / PROMPT (提示词管理 v0.2+) / PROVIDER (Provider 抽象接入 v0.1+5/v0.3+SDK) 四个能力模块的 TRD 概述 (见 §3 / §4 / §5 / §6 增补小节)。
+> - **开源协议统一 MIT** (修正原 Apache-2.0)。
+> - **附录 C 数据模型**: 06 文档由 29 表调整为 **20 表** (与 01 §4.5.1 / 02 §3.5 / 04 §16.10 一致)；v0.1 落地 12 表 (vs v4.3 全景 20 表)。
 >
-> **v1.2 变更说明**: 清理 Rust/Tauri 历史遗留信息，统一为 Electron + TypeScript 方案。§9.2 工程结构替换为 Electron monorepo，§9.3 接口契约替换为 TypeScript interface，§9.6 打包替换为 electron-builder，§11.2 非功能目标对齐分阶段，附录 C 数据模型引用 06 文档 29 张表。
->
-> **v1.3 变更说明**: 对齐 v4.2 架构，更新产品形态为多客户端分阶段交付（M19 修复）。§1.4 竞品对标表"形态"行由"原生桌面 + CLI 双形态"改为"原生桌面 (v0.1) + TUI/Web/CLI (v0.2+)"，对齐 4 客户端架构与"收缩 v0.1 范围"策略（v0.1 = Desktop 嵌入式 + 4 模块 + 12 表，TUI/Web/CLI 推迟到 v0.2+）。
+> **v1.3 变更说明** (历史): 对齐 v4.2 架构，更新产品形态为多客户端分阶段交付（M19 修复）。§1.4 竞品对标表"形态"行由"原生桌面 + CLI 双形态"改为"原生桌面 (v0.1) + TUI/Web/CLI (v0.2+)"，对齐 4 客户端架构与"收缩 v0.1 范围"策略（v0.1 = Desktop 嵌入式 + 4 模块 + 12 表，TUI/Web/CLI 推迟到 v0.2+）。v1.4 已将 UI 与持久化层重置，v1.3 的多客户端分阶段策略保留。
 
 ---
 
@@ -1074,28 +1078,63 @@ profile:
 | 层 | 选型 (实施版 v3.3) | 理由 |
 |----|------|------|
 | 桌面框架 | **Electron 35** | 用户偏好，Node.js 原生集成，生态最成熟 |
-| 前端 | **React 19 + TypeScript 5.7** | antd v6 原生支持 React 19 |
-| UI 库 | **@lobehub/ui 为主（base-ui 优先 → 高级组件 → 封装 → antd v6 兜底）** | LobeHub 生态，Chat/Markdown 开箱即用 |
-| 代码编辑器 | **Monaco Editor** | 用户指定，IDE 级能力 |
-| AI 输入编辑器 | **@lobehub/editor** (Lexical) | 富文本 + /命令 + @文件 + 附件预览 |
-| 图标库 | **@lobehub/icons + @ant-design/icons** | AI 品牌图标 |
-| Markdown | **@lobehub/ui/mdx** | LaTeX + 语法高亮 + 流式渲染 |
-| 代码规范 | **@lobehub/lint** | ESLint + Prettier 统一配置 |
+| 前端 | **React 19 + TypeScript 5.7** | antd v5 + Tailwind v4 原生支持 React 19 (v1.4 重置) |
+| UI 库 (v1.4 重置) | **Ant Design v5 + Tailwind CSS v4** | 企业级组件最全 + 原子布局；退役 LobeHub 生态 |
+| 代码编辑器 | **Monaco Editor** | IDE 级能力 |
+| AI 输入编辑器 (v1.4 重置) | **TipTap v2 + ProseMirror** | 富文本 + /命令芯片 + @文件提及 + 附件预览 (退役 @lobehub/editor) |
+| 可拖拽面板 (v1.4 新增) | **react-resizable-panels 2.1** | 三栏可调面板 (替代 @lobehub/ui DraggablePanel) |
+| 图标库 | **lucide-react + 自建模型 brand SVG** | 通用图标 (退役 @lobehub/icons) |
+| Markdown | **react-markdown + rehype/remark 插件链** | LaTeX + 语法高亮 + 流式渲染 (退役 @lobehub/ui/mdx) |
+| 代码规范 | **ESLint 9 + Prettier 3** | 直接配置 (退役 @lobehub/lint) |
 | 终端 | **xterm.js** | 事实标准 |
-| 后端逻辑 | **TypeScript (Node.js + Worker Threads)** | 用户偏好，全栈统一 |
-| IPC | Electron IPC (contextBridge) | Electron 原生 |
-| 持久化 | **SQLite (better-sqlite3)** + 文件 | Node.js 绑定 |
+| 后端逻辑 | **TypeScript (Node.js + Worker Threads)** | headless Agent 引擎 @opencode/core，无 Electron 依赖 (CS 分离) |
+| 通信协议 (新增) | **JSON-RPC 2.0** | OpenCode-style CS 分离，多 Transport (Embedded/IPC/stdio/HTTP+SSE/WebSocket) |
+| IPC | Electron IPC (contextBridge) | Electron 原生 (v0.1 仅 Embedded + Electron IPC) |
+| 持久化 (v1.4 强化) | **SQLite (better-sqlite3) + DDD Repository 接口隔离 + Drizzle ORM** | domain 接口 / infra SQLite 实现；可替换为 Remote/Postgres (业务零修改) |
 | 向量 | **sqlite-vec** 默认 / LanceDB | 本地优先 |
+| 调度 (v1.4 新增) | **node-cron 3.x** | SCHED 域定时任务 (v0.4 启用) |
+| 提示词模板 (v1.4 强化) | **Handlebars** | PROMPT 域变量插值 (v0.2+ 模板库系统) |
+| Provider 抽象 (v1.4 新增) | **@opencode/ai-sdk** (自研) + openai/anthropic/gemini SDK | v0.1 落地 5 Provider；v0.3+ 自定义接入 SDK |
 | CLI | **Commander.js / xterm.js** | TypeScript 实现 |
 | 构建 | **npm + Vite + electron-vite + Turborepo** | 统一构建链 |
-| 测试 | **Vitest + Playwright** | TS 原生测试栈 |
-| 图表 (Phase 3) | **@lobehub/charts** | 基于 Recharts |
+| 测试 | **Vitest + Playwright** | TS 原生测试栈 + InMemoryRepository 单测 |
+| 图表 (Phase 3) | **Recharts v2** | 上游 OSS (退役 @lobehub/charts) |
 
 > **设计决策 D9.1 (修订)**: 核心引擎 (Prompt/Context/Harness/Loop) 用 **TypeScript** 实现,运行于 Electron Main Process 的 **Worker Threads** 中以实现崩溃隔离与多核并行;前后端共享类型定义,全栈单一语言。这是「**统一性 + 生态**」的选择,牺牲部分性能换取开发效率与团队技能统一。详见 [08 文档 §2 方案 B](./08-技术选型与架构方案(实施版).md)。
 
-> **设计决策 D9.2 (新增)**: 采用**双编辑器架构** — 代码编辑用 Monaco (IDE 级),AI 对话输入用 @lobehub/editor (Lexical 富文本)。各司其职,非功能冗余。详见 [08 文档 §3.3](./08-技术选型与架构方案(实施版).md) 与 [09 文档 §0.3](./09-LobeHub生态集成方案.md)。
+> **设计决策 D9.2 (v1.4 更新)**: 采用**双编辑器架构** — 代码编辑用 Monaco (IDE 级),AI 对话输入用 **TipTap v2 (ProseMirror 富文本)** (v1.4 重置，退役 @lobehub/editor/Lexical)。各司其职,非功能冗余。详见 [08 文档 v3.8 §3.4](./08-技术选型与架构方案(实施版).md) 与 [05 文档 v4.3 §6](./05-技术选型文档.md)。
 
-> **设计决策 D9.3 (新增)**: **UI 框架优先级策略** — 遵循 [LobeHub 官方 React 组件编写指南](https://www.skills.sh/lobehub/lobehub/react),**禁止将 antd v6 + antd-style 作为首选 UI 框架**。UI 组件选型遵循 5 级降序优先级:**@lobehub/ui base-ui 无头原语(优先)→ @lobehub/ui 高级组件 → 基于 LobeHub UI 封装 → antd v6 兜底 → 自定义实现**。antd v6 仅作为 @lobehub/ui 的底层依赖存在,不直接使用其原生组件 API;仅当 @lobehub/ui 完全无法满足时(如复杂 Table/Tree)才作为兜底。界面布局统一使用 **@lobehub/ui Layout 组件体系**(Layout/LayoutHeader/LayoutMain/LayoutSidebar/LayoutToc + DraggablePanel),**替代 react-resizable-panels 方案**。详见 [09 文档 v1.2 §0.4](./09-LobeHub生态集成方案.md) 与 [08 文档 v3.3 §3.3](./08-技术选型与架构方案(实施版).md)。
+> **设计决策 D9.3 (v1.4 重置)**: **UI 框架优先级策略 — Ant Design v5 + Tailwind CSS v4 双轨**。退役 LobeHub 生态 (文档 09 已删除；原 @lobehub/ui / base-ui / @lobehub/editor / @lobehub/icons / antd v6 兜底定位 / antd-style 全部失效)。
+>
+> **组件优先级 (v1.4, 4 级降序)**:
+> - P1 `src/components` 项目自建可复用组件 (基于 antd + Tailwind 封装) — AI 状态面板 / Agent 模式切换器 / ChatPanel / MessageList / LoopTrace / Prompt Inspector 等业务组件
+> - P2 `antd` v5 原生 API — Table / Tree / Form / Modal / Drawer / Notification / Select / Tabs / Menu / Tooltip / Dropdown
+> - P3 自建或可选 `@radix-ui/*` (shadcn 风格源码复制) — antd 风格不符的边缘无头原语场景 (不强制引入整库)
+> - P4 自定义实现 — 真正的最后手段 (特殊定制需求)
+>
+> **样式方案优先级 (v1.4, 3 级降序)**:
+> - S1 Tailwind utility class (建议 `tw-` prefix，与 antd 共存隔离) — 布局/间距/色彩/响应式/暗色模式
+> - S2 antd `ConfigProvider` token — antd 组件级主题 (主色/圆角/字号)
+> - S3 内联 `style` 或 CSS Modules — 一次性特殊样式
+>
+> **核心替换关系 (v1.4)**:
+> - `@lobehub/ui` (base-ui + 高级 + Layout + DraggablePanel) → **antd v5 + Tailwind v4 + react-resizable-panels 2.1**
+> - `@lobehub/ui Layout` + DraggablePanel → **antd Layout + react-resizable-panels 2.1**
+> - `@lobehub/ui/mdx` → **react-markdown + rehype-raw + rehype-highlight + remark-gfm + remark-math + rehype-katex**
+> - `@lobehub/icons` → **lucide-react + 自建模型 brand SVG**
+> - `@lobehub/ui/chat` (ChatItem) → **项目自建** ChatPanel/MessageList (基于 antd + Tailwind)
+> - `@lobehub/editor` (Lexical) → **TipTap v2 + ProseMirror**
+> - `createStaticStyles` / antd-style → **Tailwind utility + antd ConfigProvider token**
+> - `@lobehub/ui/base-ui` 无头原语 → antd 原生 + 可选 Radix 源码复制
+> - `@lobehub/lint` → **ESLint 9 + Prettier 3 直接配置**
+> - `@lobehub/charts` → **Recharts v2** (上游 OSS)
+>
+> **核心原则**:
+> - `<rd>` 禁止 `import ... from '@lobehub/*'` 与 `antd-style createTheme` (CI lint 规则强制)
+> - Tailwind 与 antd 共存须 `prefix` 或 `ConfigProvider` 双重隔离，避免 utility 与 antd 内联样式冲突
+> - Markdown 渲染由项目自建 `<MarkdownRenderer>` 承载 (react-markdown + 插件链)，供 Desktop 与未来 Web 瘦客户端复用
+>
+> 详见 [05 文档 v4.3 §4 / §6](./05-技术选型文档.md) 与 [08 文档 v3.8 §3.2 / §3.3 / §3.4](./08-技术选型与架构方案(实施版).md)。
 
 ### 9.2 核心模块工程结构（前后端分离 v4.1）
 
