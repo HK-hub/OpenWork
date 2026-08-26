@@ -1,73 +1,119 @@
-# Dependencies
+# ============================================================
+# OpenWork — .gitignore (Java 后端 + React 前端 双栈工程化)
+# 说明：项目技术栈已切换为 Java(Spring Boot/Maven) + Web 前端(npm/Vite)，
+#       原有 Node 规则保留(前端仍用)，新增 Java/Maven/Docker 段。
+# ============================================================
+
+# ---------------- Dependencies ----------------
 node_modules/
 .pnpm-store/
 
-# Build output
+# ---------------- Java / Maven ----------------
+target/
+!.mvn/wrapper/maven-wrapper.jar
+flattened-pom.xml
+dependency-reduced-pom.xml
+release.properties
+*.releaseBackup
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# Eclipse / VSCode Java 扩展产物
+.settings/
+.project
+.classpath
+.factorypath
+bin/
+.apt_generated/
+.apt_generated_test/
+
+# Gradle (如临时引入)
+.gradle/
+buildSrc/build/
+
+# ---------------- Build output (前端) ----------------
 out/
 dist/
 build/
 *.tsbuildinfo
 
-# Electron
+# ---------------- Electron (历史遗留，过渡期保留) ----------------
 release/
 release-builds/
+.dev-userdata/
 
-# IDE
+# ---------------- IDE ----------------
 .vscode/
 .idea/
+*.iml
+*.ipr
+*.iws
 *.swp
 *.swo
 *~
 
-# OS
+# ---------------- OS ----------------
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Logs
+# ---------------- Logs ----------------
 logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+hs_err_pid*
+replay_pid*
 
-# Environment
+# ---------------- Environment / Secrets ----------------
 .env
 .env.local
 .env.*.local
+*.pem
+*.keystore
+!**/resources/keystores/development.keystore
 
-# Test coverage
+# ---------------- Test coverage / Reports ----------------
 coverage/
 .nyc_output/
+dependency-check-report.html
+dependency-check-report.xml
+cyclonedx-*.json
+cyclonedx-*.xml
+jacoco.exec
 
-# Playwright
+# ---------------- Playwright / E2E ----------------
 test-results/
 playwright-report/
+blob-report/
 
-# Cache
+# ---------------- Cache ----------------
 .cache/
 .parcel-cache/
 .vite/
 .turbo/
 
-# Database
+# ---------------- Database / Runtime data ----------------
 *.sqlite
 *.sqlite3
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
+opencode.db*
+data/
+.runtime/
+*.migration.lock
 
-# Temp
+# 本地 docker-compose 数据卷 (postgres/es/milvus 持久化目录)
+.docker-data/
+docker/volumes/
+docker-compose.override.yml
+
+# ---------------- Temp / Backup ----------------
 *.tmp
 *.bak
 
-# Dev userData (sandbox workaround)
-.dev-userdata/
-
-# Runtime data
-data/
-.runtime/
-opencode.db
-opencode.db-journal
-opencode.db-wal
-opencode.db-shm
-
-# Migration lock
-*.migration.lock
+# OpenWork 项目级运行时目录
+.openwork/
