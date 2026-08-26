@@ -1,4 +1,4 @@
-# OpenCoding Agent Desktop — 完整产品设计文档
+﻿# OpenWork Agent Desktop — 完整产品设计文档
 
 > **文档版本**: v1.4 (UI 栈重置 + CS 分离深化 + DDD 持久化 + 四能力域同步)
 > **文档类型**: 产品需求 + 技术架构 + 工程实现规格 (PRD + TRD 合订)
@@ -8,7 +8,7 @@
 >
 > **v1.4 变更说明 (UI 栈重置 + CS 分离深化 + DDD 持久化 + 四能力域同步)**:
 > - **UI 栈重置**: 全面**退役** LobeHub 生态 (文档 09 已删除，原 v1.1/v1.2 的 LobeHub UI 优先级策略失效)；改用 **Ant Design v5 + Tailwind CSS v4** 双轨；AI 输入编辑器改用 **TipTap v2 + ProseMirror** (替代 @lobehub/editor)；Markdown 改用 react-markdown + rehype/remark；可拖拽面板改用 react-resizable-panels 2.1；设计决策 D9.3 重置 (见 §9.x)。详见 05 v4.3 §4/§6、08 v3.8 §3.2/§3.3、04 v4.3 §5。
-> - **CS 分离深化**: 确立 OpenCode-style 客户端-服务端分离为**主架构**。v0.1 **仅交付 Desktop 客户端** (Embedded 模式 + Electron IPC Transport)，但服务契约 (§9.3)、Transport 抽象、Client SDK 已为后续 TUI/Web/CLI 接入预留扩展点。客户端扩展性通过 `@opencode/api` 公开契约保证。
+> - **CS 分离深化**: 确立 OpenCode-style 客户端-服务端分离为**主架构**。v0.1 **仅交付 Desktop 客户端** (Embedded 模式 + Electron IPC Transport)，但服务契约 (§9.3)、Transport 抽象、Client SDK 已为后续 TUI/Web/CLI 接入预留扩展点。客户端扩展性通过 `@openwork/api` 公开契约保证。
 > - **DDD 持久化**: §5 持久化能力明确所有数据库接口/查询/操作经 **DDD Repository 接口隔离层** (domain 接口 / infra SQLite 实现 + Drizzle ORM 查询构造)，业务层零 SQL 耦合；可替换为 Remote/Postgres 实现而业务层零修改。详见 04 v4.3 §11.9、05 v4.3 §22、06 v4.3 §2.8。
 > - **四能力域同步**: 与 01 v2.4 / 02 v2.4 同步新增 SCHED (定时任务 v0.4) / GOAL (目标管理 v0.3) / PROMPT (提示词管理 v0.2+) / PROVIDER (Provider 抽象接入 v0.1+5/v0.3+SDK) 四个能力模块的 TRD 概述 (见 §3 / §4 / §5 / §6 增补小节)。
 > - **开源协议统一 MIT** (修正原 Apache-2.0)。
@@ -62,7 +62,7 @@
 
 ### 1.1 产品定位
 
-OpenCoding Agent Desktop 是一款**开源、本地优先 (local-first)、高度可配置**的 Coding Agent 桌面端应用。它将「LLM 推理 + 工具执行 + 代码库感知 + 工作流编排」封装为一个可交互、可中断、可审计的智能体 (Agent),面向开发者的真实编码场景。
+OpenWork Agent Desktop 是一款**开源、本地优先 (local-first)、高度可配置**的 Coding Agent 桌面端应用。它将「LLM 推理 + 工具执行 + 代码库感知 + 工作流编排」封装为一个可交互、可中断、可审计的智能体 (Agent),面向开发者的真实编码场景。
 
 核心命题:
 - **不是**一个 Chat 框 + 代码补全;**而是**一个具备规划、执行、验证、反思闭环的自主编码智能体。
@@ -228,7 +228,7 @@ OpenCoding Agent Desktop 是一款**开源、本地优先 (local-first)、高度
 | L6 | Dynamic Context | 运行时 | 否 | 项目语言、Git 状态、当前选区、时间预算 |
 | L7 | User Override | 用户 | — | 用户在会话中追加的 system 指令 |
 
-> **设计决策 D3.1**: 用户覆盖允许通过 `CLAUDE.md` / `AGENTS.md` / `OPENCODING.md` 项目级指令文件注入,与 Claude Code / Codex 生态对齐,降低迁移成本。
+> **设计决策 D3.1**: 用户覆盖允许通过 `CLAUDE.md` / `AGENTS.md` / `OpenWork.md` 项目级指令文件注入,与 Claude Code / Codex 生态对齐,降低迁移成本。
 
 ##### B. 提示词模板管理
 
@@ -274,7 +274,7 @@ OpenCoding Agent Desktop 是一款**开源、本地优先 (local-first)、高度
 
 | ID | 决策 | 理由 |
 |----|------|------|
-| D3.1 | 支持 `AGENTS.md` / `CLAUDE.md` / `OPENCODING.md` 多文件名兼容 | 降低生态迁移成本 |
+| D3.1 | 支持 `AGENTS.md` / `CLAUDE.md` / `OpenWork.md` 多文件名兼容 | 降低生态迁移成本 |
 | D3.2 | Prompt 分层而非单一字符串 | 支持部分覆盖、便于调试 |
 | D3.3 | 模板使用 Jinja2 风格 | 开发者熟悉度高,生态成熟 |
 | D3.4 | Prompt 随会话持久化,可回放 | 可复现是 Agent 工程核心要求 |
@@ -293,7 +293,7 @@ prompt:
   override_files:
     - "AGENTS.md"
     - "CLAUDE.md"
-    - "OPENCODING.md"
+    - "OpenWork.md"
   template_dir: "config/prompts/templates"
   inspector:
     enabled: true
@@ -421,8 +421,8 @@ context:
     rrf_k: 60
   memory:
     work:  ephemeral_archivable
-    project: "AGENTS.md + .opencoding/memory.jsonl"
-    global: "~/.opencoding/memory/global.jsonl"
+    project: "AGENTS.md + .OpenWork/memory.jsonl"
+    global: "~/.OpenWork/memory/global.jsonl"
   eviction:
     policy: "lru_importance"
     log_evicted: true
@@ -756,13 +756,13 @@ mcp:
 - **插件生命周期**: install → enable → configure → run → disable → uninstall。
 - **沙箱**: 插件默认运行于隔离 Worker,权限按声明授予 (filesystem/network/ui/…),用户批准。
 - **插件市场**: 内置市场入口,支持索引、安装、更新、评分 (初期可对接开源 registry)。
-- **插件开发 SDK**: 提供 TS SDK,脚手架 `opencode plugin create`。
+- **插件开发 SDK**: 提供 TS SDK,脚手架 `openwork plugin create`。
 - **manifest 示例**:
   ```json
   {
-    "name": "opencode-jira",
+    "name": "openwork-jira",
     "version": "1.0.0",
-    "engines": { "opencode": "^1.0" },
+    "engines": { "openwork": "^1.0" },
     "permissions": ["network:https://*.atlassian.net", "ui:panel"],
     "contributes": {
       "tools": ["./tools/issue.js"],
@@ -783,7 +783,7 @@ mcp:
 - 内置命令: `/help`, `/clear`, `/model`, `/config`, `/history`, `/replay`, `/diff`, `/undo`, `/checkpoint`, `/export`, `/profile`, `/mcp`, `/skill`, `/agent`…
 - 用户自定义命令: 一个命令 = 一段 Prompt 模板 + 可选前置脚本 + 可选工具白名单。
 - 命令可参数化、可链式、可绑定快捷键。
-- 项目级命令: `.opencoding/commands/*.md`。
+- 项目级命令: `.OpenWork/commands/*.md`。
 
 ### 4.5 Sub-Agent (子智能体)
 
@@ -819,7 +819,7 @@ mcp:
 - Skill = 可复用的「提示词 + 工具白名单 + 工作流 + 可选脚本」封装。
 - 与「插件」区别: Skill 主要是 prompt/workflow 层扩展,不引入新代码运行时。
 - 内置 Skills 库 (参考对标): TDD / commit / PR / code-review / debug / refactor / scaffold / docs / migration / security-audit …。
-- 用户可创建、分享、安装 Skills (`.opencoding/skills/*.yaml`)。
+- 用户可创建、分享、安装 Skills (`.OpenWork/skills/*.yaml`)。
 - Skill 可声明前置依赖 (如需要某 MCP server)。
 - Skill 可被命令、快捷键、或 Agent 自动调用 (基于意图识别)。
 
@@ -851,13 +851,13 @@ mcp:
 ### 5.2 记忆持久化 (Memory Persistence)
 
 - 工作记忆: 会话级,可手动转存为项目记忆。
-- 项目记忆: `.opencoding/memory.jsonl` + `AGENTS.md` (可读人写)。
-- 全局记忆: `~/.opencoding/memory/global.jsonl`。
+- 项目记忆: `.OpenWork/memory.jsonl` + `AGENTS.md` (可读人写)。
+- 全局记忆: `~/.OpenWork/memory/global.jsonl`。
 - 记忆可分类 (decision / fact / preference / lesson / todo),可搜索、可编辑、可遗忘。
 
 ### 5.3 配置持久化 (Configuration Persistence)
 
-- 多级配置 (优先级高→低): 命令行参数 > 会话临时 > 项目 `.opencoding/` > 全局 `~/.opencoding/` > 内置默认。
+- 多级配置 (优先级高→低): 命令行参数 > 会话临时 > 项目 `.OpenWork/` > 全局 `~/.OpenWork/` > 内置默认。
 - 配置格式: YAML (人友好) + JSON Schema 校验。
 - 配置变更历史版本化 (Git-like),可回滚。
 - 配置热加载: 修改文件即时生效,无需重启。
@@ -889,7 +889,7 @@ mcp:
 
 存储位置:
 ```
-~/.opencoding/
+~/.OpenWork/
   ├── config/            # 全局配置
   ├── memory/global.jsonl
   ├── sessions/         # SQLite + 附件
@@ -898,13 +898,13 @@ mcp:
   ├── audit/
   ├── cache/
   └── plugins/
-<project>/.opencoding/
+<project>/.OpenWork/
   ├── config.yaml       # 项目级配置
   ├── memory.jsonl
   ├── commands/
   ├── skills/
   ├── prompts/
-  └── agents.md / claude.md / opencoding.md
+  └── agents.md / claude.md / OpenWork.md
 ```
 
 ---
@@ -913,7 +913,7 @@ mcp:
 
 ### 6.1 配置导入导出
 
-- 一键导出: 全局配置 + 选定 Profile + 自定义 Prompt/Skill/Command 模板,打包为 `.opencoding-bundle.zip`。
+- 一键导出: 全局配置 + 选定 Profile + 自定义 Prompt/Skill/Command 模板,打包为 `.OpenWork-bundle.zip`。
 - 一键导入: 解包并合并,冲突策略可选 (skip/overwrite/rename)。
 - 包含 manifest: 版本、来源、生成时间、内容清单。
 
@@ -931,7 +931,7 @@ mcp:
 ### 6.4 团队共享
 
 - **Profile (§7)** 作为团队配置单元,可发布到 Git 仓库 / 内部市场。
-- 团队成员 `opencode profile use team-frontend` 一键拉取应用。
+- 团队成员 `openwork profile use team-frontend` 一键拉取应用。
 - Skills / Commands / Sub-Agent / MCP 配置随 Profile 分发。
 - 支持「团队约定」层: 强制项 (force) 与建议项 (recommend) 分离,便于治理。
 
@@ -1012,7 +1012,7 @@ profile:
 
 - 设置面板分层: 通用 / 模型 / Agent / 工具 / MCP / 插件 / 外观 / 快捷键 / 同步 / 高级。
 - 每项配置带说明、默认值、校验。
-- 支持搜索 + 命令行式快速设置 (`opencode set loop.max_iterations 50`)。
+- 支持搜索 + 命令行式快速设置 (`openwork set loop.max_iterations 50`)。
 - 导出当前设置为 Profile。
 
 ---
@@ -1087,14 +1087,14 @@ profile:
 | Markdown | **react-markdown + rehype/remark 插件链** | LaTeX + 语法高亮 + 流式渲染 (退役 @lobehub/ui/mdx) |
 | 代码规范 | **ESLint 9 + Prettier 3** | 直接配置 (退役 @lobehub/lint) |
 | 终端 | **xterm.js** | 事实标准 |
-| 后端逻辑 | **TypeScript (Node.js + Worker Threads)** | headless Agent 引擎 @opencode/core，无 Electron 依赖 (CS 分离) |
+| 后端逻辑 | **TypeScript (Node.js + Worker Threads)** | headless Agent 引擎 @openwork/core，无 Electron 依赖 (CS 分离) |
 | 通信协议 (新增) | **JSON-RPC 2.0** | OpenCode-style CS 分离，多 Transport (Embedded/IPC/stdio/HTTP+SSE/WebSocket) |
 | IPC | Electron IPC (contextBridge) | Electron 原生 (v0.1 仅 Embedded + Electron IPC) |
 | 持久化 (v1.4 强化) | **SQLite (better-sqlite3) + DDD Repository 接口隔离 + Drizzle ORM** | domain 接口 / infra SQLite 实现；可替换为 Remote/Postgres (业务零修改) |
 | 向量 | **sqlite-vec** 默认 / LanceDB | 本地优先 |
 | 调度 (v1.4 新增) | **node-cron 3.x** | SCHED 域定时任务 (v0.4 启用) |
 | 提示词模板 (v1.4 强化) | **Handlebars** | PROMPT 域变量插值 (v0.2+ 模板库系统) |
-| Provider 抽象 (v1.4 新增) | **@opencode/ai-sdk** (自研) + openai/anthropic/gemini SDK | v0.1 落地 5 Provider；v0.3+ 自定义接入 SDK |
+| Provider 抽象 (v1.4 新增) | **@openwork/ai-sdk** (自研) + openai/anthropic/gemini SDK | v0.1 落地 5 Provider；v0.3+ 自定义接入 SDK |
 | CLI | **Commander.js / xterm.js** | TypeScript 实现 |
 | 构建 | **npm + Vite + electron-vite + Turborepo** | 统一构建链 |
 | 测试 | **Vitest + Playwright** | TS 原生测试栈 + InMemoryRepository 单测 |
@@ -1141,7 +1141,7 @@ profile:
 > **架构变更说明** (v1.2): 采用**前后端分离**架构。后端是 headless Agent 引擎（纯 Node.js，无 Electron 依赖），前端是多个 thin client（Desktop/TUI/Web/CLI），通过 JSON-RPC 2.0 协议通信。类似 OpenCode（Go 后端 + 多客户端）和 Codex（CLI/App 前端）。详见 [04 文档 v4.1 §4-§6](./04-架构设计文档.md)。
 
 ```
-opencoding/
+OpenWork/
 ├── apps/                           # 前端客户端（thin clients）
 │   ├── desktop/                    # Electron 桌面应用
 │   │   ├── main/                   # Electron main (窗口/菜单/托盘 + 后端嵌入)
@@ -1249,7 +1249,7 @@ opencoding/
 ```
 
 **后端运行模式**：
-1. **嵌入式**（默认，桌面/CLI）：直接 import @opencode/core，在同进程内运行，通过 IPC 或 direct call 通信
+1. **嵌入式**（默认，桌面/CLI）：直接 import @openwork/core，在同进程内运行，通过 IPC 或 direct call 通信
 2. **服务式**：独立 Node.js 进程，监听 HTTP 端口，多客户端共享
 3. **子进程式**：CLI/TUI 启动后端子进程，通过 stdio 通信
 

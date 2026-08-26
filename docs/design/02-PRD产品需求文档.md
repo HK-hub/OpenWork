@@ -1,4 +1,4 @@
-# OpenCoding Agent Desktop — 产品需求文档 (PRD)
+﻿# OpenWork Agent Desktop — 产品需求文档 (PRD)
 
 > **文档版本**: v2.4 (Harness 能力对标 + 四能力域补齐 + CS 分离契约指针 + UI/LobeHub 退役)
 > **文档类型**: Product Requirements Document
@@ -51,7 +51,7 @@
 
 ### 1.1 产品定义
 
-OpenCoding Agent Desktop 是一款开源、本地优先、高度可配置的 Coding Agent 多客户端平台。后端采用无头 (headless) 引擎架构，前端提供 Desktop / TUI / Web / CLI 多种客户端，通过 JSON-RPC 2.0 over 多 Transport (HTTP/SSE、WebSocket、stdio、Electron IPC、Embedded) 与后端通信。它将 LLM 推理、工具执行、代码库感知、工作流编排封装为可交互、可中断、可审计的智能体，并支持用户基于 @opencode/api 契约自定义客户端开发。
+OpenWork Agent Desktop 是一款开源、本地优先、高度可配置的 Coding Agent 多客户端平台。后端采用无头 (headless) 引擎架构，前端提供 Desktop / TUI / Web / CLI 多种客户端，通过 JSON-RPC 2.0 over 多 Transport (HTTP/SSE、WebSocket、stdio、Electron IPC、Embedded) 与后端通信。它将 LLM 推理、工具执行、代码库感知、工作流编排封装为可交互、可中断、可审计的智能体，并支持用户基于 @openwork/api 契约自定义客户端开发。
 
 > **v0.1 阶段性说明** (v2.3 新增): 多客户端平台是产品的**长期愿景**，但 v0.1 优先交付 Desktop 客户端 (Embedded 模式)，仅实现 Embedded + Electron IPC 两种 Transport。TUI / Web / CLI 客户端 (REQ-UI-008~010) 与自定义客户端 SDK (REQ-UI-011) 降级为 v0.2+；服务式 (Service) 后端、Sub-Agent、Multi-Agent 等多客户端相关能力推迟到 v0.2~v0.3。这一收缩策略参照 07-多角色审视评估报告 §1.1 (S1) 与 §8.3 总体结论，使 v0.1 在 6-8 周内可交付，同时保留 v4.1 前后端分离架构的演进余地。多客户端平台愿景与 v4.1 架构演进方向保留不变。
 
@@ -439,7 +439,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 
 **验收标准**:
 - [ ] 内置 16+ 命令: /help /clear /model /config /history /replay /diff /undo /checkpoint /export /profile /mcp /skill /agent /branch /retry
-- [ ] 用户自定义命令: `.opencoding/commands/*.md`
+- [ ] 用户自定义命令: `.OpenWork/commands/*.md`
 - [ ] 命令支持参数化
 - [ ] 命令支持链式调用
 - [ ] 命令可绑定快捷键
@@ -704,7 +704,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 **描述**: 所有数据可一键导出。
 
 **验收标准**:
-- [ ] 完整导出: `.opencoding-bundle.zip` 包含全部数据
+- [ ] 完整导出: `.OpenWork-bundle.zip` 包含全部数据
 - [ ] 配置导出: Profile YAML/JSON
 - [ ] 会话导出: JSON/Markdown/重放包
 - [ ] 记忆导出: JSONL
@@ -756,7 +756,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 
 ### 3.9 多客户端需求
 
-> **架构说明**: v2.2 起采用前后端分离架构，后端为无头引擎 (@opencode/core + @opencode/server)，前端为多种瘦客户端通过 JSON-RPC 2.0 Transport (HTTP/SSE、WebSocket、stdio、Electron IPC、Embedded) 连接后端。REQ-UI-001 至 REQ-UI-007 适用于 Desktop 客户端 (Electron)；REQ-UI-008 至 REQ-UI-011 定义其他客户端形态。
+> **架构说明**: v2.2 起采用前后端分离架构，后端为无头引擎 (@openwork/core + @openwork/server)，前端为多种瘦客户端通过 JSON-RPC 2.0 Transport (HTTP/SSE、WebSocket、stdio、Electron IPC、Embedded) 连接后端。REQ-UI-001 至 REQ-UI-007 适用于 Desktop 客户端 (Electron)；REQ-UI-008 至 REQ-UI-011 定义其他客户端形态。
 
 > **v0.1 范围收缩说明** (v2.3 新增): 根据 07-多角色审视评估报告 §1.1 (S1)，v0.1 **仅交付 Desktop 客户端 (REQ-UI-001~007)**，通过 Embedded + Electron IPC 两种 Transport 连接后端。TUI (REQ-UI-008) / Web (REQ-UI-009) / CLI (REQ-UI-010) / 自定义客户端 (REQ-UI-011) 全部降级为 v0.2+，其中 REQ-UI-008 与 REQ-UI-010 优先级由 P1 降级为 P2。服务式 (Service) 后端、HTTP/SSE/WebSocket Transport 推迟到 v0.2~v0.3。多客户端平台仍是产品长期愿景，v4.1 架构演进方向保留。
 
@@ -849,7 +849,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 - [ ] 支持会话管理：新建/切换/搜索会话
 - [ ] 支持流式对话渲染（Markdown 终端渲染）
 - [ ] 支持工具调用审批（HITL 确认）
-- [ ] 通过 stdio Transport 连接 @opencode/server
+- [ ] 通过 stdio Transport 连接 @openwork/server
 - [ ] 支持基础 Slash Commands
 - [ ] 键盘快捷键操作
 
@@ -859,7 +859,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 
 **验收标准**:
 - [ ] 基于 React 的浏览器 SPA
-- [ ] 通过 HTTP/SSE Transport 连接 @opencode/server
+- [ ] 通过 HTTP/SSE Transport 连接 @openwork/server
 - [ ] 支持远程访问（跨主机连接后端引擎）
 - [ ] 支持会话/对话/工具调用审批
 - [ ] 多面板布局适配浏览器视口
@@ -871,8 +871,8 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 
 **验收标准**:
 - [ ] 基于 Commander.js 的命令行接口
-- [ ] 通过 stdio Transport 连接 @opencode/server
-- [ ] 支持非交互模式：`opencode run "任务描述"` 单次执行
+- [ ] 通过 stdio Transport 连接 @openwork/server
+- [ ] 支持非交互模式：`openwork run "任务描述"` 单次执行
 - [ ] 支持交互模式：REPL 式持续对话
 - [ ] 支持管道输入/输出（stdin/stdout JSON 流）
 - [ ] 支持脚本化与 CI/CD 集成
@@ -880,10 +880,10 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 
 #### REQ-UI-011: 自定义客户端 [P2]
 
-**描述**: 用户可基于 @opencode/api 契约 + Transport 客户端包开发自定义客户端，实现个性化交互形态。
+**描述**: 用户可基于 @openwork/api 契约 + Transport 客户端包开发自定义客户端，实现个性化交互形态。
 
 **验收标准**:
-- [ ] 发布 @opencode/api 包，定义完整 JSON-RPC 契约类型
+- [ ] 发布 @openwork/api 包，定义完整 JSON-RPC 契约类型
 - [ ] 提供 Transport 客户端包（HTTP/SSE、WebSocket、stdio、Embedded）
 - [ ] 提供客户端开发文档与示例
 - [ ] 提供最小可运行的 Embedded 客户端 SDK
@@ -1196,7 +1196,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 **描述**: 用户/企业自定义 Provider 接入。
 
 **验收标准**:
-- [ ] 发布 @opencode/ai-sdk 包，提供 AIProviderAdapter 类型与脚手架
+- [ ] 发布 @openwork/ai-sdk 包，提供 AIProviderAdapter 类型与脚手架
 - [ ] 自定义 Adapter npm 包经 Plugin 系统注册到 Registry
 - [ ] 享受与内置 Provider 同一的调用/计费/审计/Fallback 待遇
 - [ ] 企业网关支持 refresh token 借用与私有端点
@@ -1415,7 +1415,7 @@ REQ-{域}-{序号}  例: REQ-AGENT-001
 | R8 | 竞品快速跟进 (Claude Code 开源或 Cursor 增加类似功能) | 中 | 高 | 保持开源社区活跃度 + 插件生态锁定 + 快速迭代节奏 | CEO |
 | R9 | 开源社区参与度低 (贡献者/插件作者少) | 中 | 中 | 良好的 CONTRIBUTING 指南 + Issue 标签体系 + 贡献者激励计划 | PM |
 | R10 | LLM 成本波动导致用户使用成本不可控 | 低 | 中 | 本地模型支持 + 成本仪表盘 + 预算上限硬性约束 | 产品 |
-| R18 | v0.1 收缩范围导致多客户端早期用户流失 (前后端分离架构风险) | 中 | 低 | 公开 v0.2 路线图明确 TUI/CLI 交付时间；v0.1 提供 @opencode/api 契约包便于社区预研自定义客户端；GitHub Releases 与 README 标注 v0.1 仅 Desktop；早期用户反馈渠道引导至 v0.2 优先级投票 | PM |
+| R18 | v0.1 收缩范围导致多客户端早期用户流失 (前后端分离架构风险) | 中 | 低 | 公开 v0.2 路线图明确 TUI/CLI 交付时间；v0.1 提供 @openwork/api 契约包便于社区预研自定义客户端；GitHub Releases 与 README 标注 v0.1 仅 Desktop；早期用户反馈渠道引导至 v0.2 优先级投票 | PM |
 
 ### 8.3 项目风险
 
